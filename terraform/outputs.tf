@@ -25,3 +25,4 @@ output "migration_backup_bucket_name" {
 output "migration_logs_table_name" {
   value = aws_dynamodb_table.migration_logs.name
 }
+
