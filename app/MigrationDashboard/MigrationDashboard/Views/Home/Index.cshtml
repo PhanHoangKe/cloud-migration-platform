@@ -1,8 +1,663 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Cloud Migration Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Section: Hero & Health Score -->
+<section id="dashboard" class="mb-4">
+    <div class="row g-4">
+        <!-- Hero Card -->
+        <div class="col-lg-9 col-md-8">
+            <div class="hero-card h-100 d-flex flex-column justify-content-between">
+                <div class="hero-content">
+                    <span class="badge bg-primary bg-opacity-25 text-primary-light mb-3 px-3 py-2 rounded-pill border border-primary border-opacity-50">
+                        <i class="bi bi-award-fill me-1"></i> Đồ án Điện toán đám mây
+                    </span>
+                    <h2 class="hero-title">Cloud Migration & Modernization Platform</h2>
+                    <p class="hero-desc">
+                        Hệ thống mô phỏng quy trình chuyển đổi ứng dụng ASP.NET Core 9 + SQL Server từ môi trường truyền thống (On-premise) lên hạ tầng điện toán đám mây (AWS Cloud) sử dụng LocalStack và công cụ Terraform để cấu hình hạ tầng dạng Code (Infrastructure as Code - IaC).
+                    </p>
+                </div>
+                <div class="tech-badge-container">
+                    <span class="tech-badge"><i class="bi bi-braces me-1"></i> ASP.NET Core 9</span>
+                    <span class="tech-badge"><i class="bi bi-database me-1"></i> SQL Server</span>
+                    <span class="tech-badge"><i class="bi bi-cloud-check-fill me-1 text-success"></i> LocalStack (AWS)</span>
+                    <span class="tech-badge"><i class="bi bi-boxes me-1 text-warning"></i> Terraform IaC</span>
+                </div>
+            </div>
+        </div>
+        <!-- Health Score Card -->
+        <div class="col-lg-3 col-md-4">
+            <div class="dashboard-card text-center d-flex flex-column align-items-center justify-content-center">
+                <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-3">Migration Health</h6>
+                <div class="health-score-container">
+                    <div class="health-circle-outer" id="healthScoreCircle" style="background: conic-gradient(#ef4444 0deg, #ef4444 126deg, #e2e8f0 0deg);">
+                        <div class="health-circle-inner">
+                            <span class="health-value" id="healthScoreValue">35</span>
+                            <span class="health-label" id="healthScoreLabel">On-Premise</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 text-muted small" id="healthScoreSub">
+                    Hạ tầng tại local chưa chuyển đổi.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section: Statistics Cards -->
+<section id="stats" class="mb-4">
+    <div class="row g-4">
+        <!-- Card 1: S3 Bucket -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card" id="statCardS3">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="stat-icon warning" id="statIconS3">
+                        <i class="bi bi-folder-symlink"></i>
+                    </div>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary" id="badgeS3">Pending</span>
+                </div>
+                <h6 class="stat-label">S3 Backup Bucket</h6>
+                <h4 class="stat-value" id="valS3">Offline</h4>
+            </div>
+        </div>
+        <!-- Card 2: DynamoDB Logs -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card" id="statCardDynamo">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="stat-icon primary" id="statIconDynamo">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary" id="badgeDynamo">Pending</span>
+                </div>
+                <h6 class="stat-label">DynamoDB Logs</h6>
+                <h4 class="stat-value" id="valDynamo">Offline</h4>
+            </div>
+        </div>
+        <!-- Card 3: Lambda Function -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card" id="statCardLambda">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="stat-icon danger" id="statIconLambda">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary" id="badgeLambda">Pending</span>
+                </div>
+                <h6 class="stat-label">Lambda Self-test</h6>
+                <h4 class="stat-value" id="valLambda">Offline</h4>
+            </div>
+        </div>
+        <!-- Card 4: Estimated Cost -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card" id="statCardCost">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="stat-icon success" id="statIconCost">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success">Active</span>
+                </div>
+                <h6 class="stat-label">Estimated Cost</h6>
+                <h4 class="stat-value" id="valCost">$0.00/month</h4>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section: Migration Center & Cloud Resources -->
+<div class="row g-4 mb-4">
+    <!-- Migration Center -->
+    <div class="col-lg-7" id="migration-center">
+        <div class="dashboard-card d-flex flex-column justify-content-between h-100">
+            <div>
+                <div class="card-header-custom">
+                    <h5 class="card-title-custom">
+                        <i class="bi bi-play-circle text-primary"></i> Migration Center
+                    </h5>
+                    <button class="btn btn-primary btn-start-migration" id="btnStartMigration">
+                        <i class="bi bi-rocket-takeoff me-2"></i> Start Migration
+                    </button>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress mb-4 d-none" id="migrationProgressContainer" style="height: 8px; border-radius: 4px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%" id="migrationProgressBar"></div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="timeline" id="migrationTimeline">
+                    <div class="timeline-item" id="timeStep1">
+                        <div class="timeline-badge">
+                            <i class="bi bi-1-circle-fill"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">Export dữ liệu từ On-premise</h6>
+                            <p class="timeline-desc">Kết xuất Database SQL Server thành file backup .bak và đóng gói dữ liệu.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" id="timeStep2">
+                        <div class="timeline-badge">
+                            <i class="bi bi-2-circle-fill"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">Upload backup lên S3</h6>
+                            <p class="timeline-desc">Chuyển tệp dữ liệu lưu trữ vào Amazon S3 Bucket được mô phỏng bởi LocalStack.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" id="timeStep3">
+                        <div class="timeline-badge">
+                            <i class="bi bi-3-circle-fill"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">Ghi migration logs vào DynamoDB</h6>
+                            <p class="timeline-desc">Tạo lịch sử chuyển đổi và lưu trạng thái chuyển đổi ứng dụng vào DynamoDB table.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" id="timeStep4">
+                        <div class="timeline-badge">
+                            <i class="bi bi-4-circle-fill"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">Chạy Lambda Post-migration Self-test</h6>
+                            <p class="timeline-desc">Kích hoạt Lambda function kiểm tra tính toàn vẹn và kết nối dữ liệu sau migration.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Mock Console -->
+            <div class="mt-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-xs text-muted font-bold text-uppercase"><i class="bi bi-terminal me-1"></i> Deployment Logs</span>
+                    <span class="badge bg-dark text-white border border-secondary border-opacity-25 px-2 py-1">Terraform & LocalStack</span>
+                </div>
+                <div class="console-box" id="migrationConsole">
+                    <div class="console-line text-muted">Ready to run simulation. Click "Start Migration" above to begin...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cloud Resources -->
+    <div class="col-lg-5" id="cloud-resources">
+        <div class="dashboard-card h-100">
+            <div class="card-header-custom">
+                <h5 class="card-title-custom">
+                    <i class="bi bi-hdd-network text-success"></i> Cloud Resources
+                </h5>
+                <span class="badge bg-success bg-opacity-10 text-success">LocalStack Endpoint</span>
+            </div>
+            
+            <div class="resource-list mt-3">
+                <!-- Resource 1 -->
+                <div class="resource-list-item">
+                    <div class="resource-info">
+                        <div class="resource-icon s3">
+                            <i class="bi bi-archive-fill"></i>
+                        </div>
+                        <div>
+                            <div class="resource-name">S3 Bucket</div>
+                            <div class="resource-type">Backup Storage</div>
+                        </div>
+                    </div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="cloud-migration-backup-kedep">cloud-migration-backup-kedep</div>
+                </div>
+                
+                <!-- Resource 2 -->
+                <div class="resource-list-item">
+                    <div class="resource-info">
+                        <div class="resource-icon dynamodb">
+                            <i class="bi bi-database-fill-gear"></i>
+                        </div>
+                        <div>
+                            <div class="resource-name">DynamoDB Table</div>
+                            <div class="resource-type">Log Database</div>
+                        </div>
+                    </div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="cloud-migration-logs-kedep">cloud-migration-logs-kedep</div>
+                </div>
+                
+                <!-- Resource 3 -->
+                <div class="resource-list-item">
+                    <div class="resource-info">
+                        <div class="resource-icon lambda">
+                            <i class="bi bi-cpu-fill"></i>
+                        </div>
+                        <div>
+                            <div class="resource-name">Lambda Function</div>
+                            <div class="resource-type">Serverless Self-test</div>
+                        </div>
+                    </div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="cloud-migration-self-test-kedep">cloud-migration-self-test-kedep</div>
+                </div>
+                
+                <!-- Resource 4 -->
+                <div class="resource-list-item">
+                    <div class="resource-info">
+                        <div class="resource-icon iam">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </div>
+                        <div>
+                            <div class="resource-name">IAM Roles & Policies</div>
+                            <div class="resource-type">Access Management</div>
+                        </div>
+                    </div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="least privilege model">least privilege</div>
+                </div>
+            </div>
+
+            <!-- Additional Detail/LocalStack Port Info -->
+            <div class="mt-4 p-3 bg-light rounded-3 border border-dashed border-secondary border-opacity-25">
+                <h6 class="text-xs text-muted font-bold text-uppercase mb-2"><i class="bi bi-info-circle me-1 text-primary"></i> LocalStack Local Mappings</h6>
+                <div class="d-flex justify-content-between text-xs mb-1">
+                    <span class="text-muted">Edge Port:</span>
+                    <span class="font-monospace text-dark font-semibold">localhost:4566</span>
+                </div>
+                <div class="d-flex justify-content-between text-xs mb-1">
+                    <span class="text-muted">Terraform State:</span>
+                    <span class="font-monospace text-success font-semibold">localstack.tfstate</span>
+                </div>
+                <div class="d-flex justify-content-between text-xs">
+                    <span class="text-muted">SQL Database:</span>
+                    <span class="font-monospace text-primary font-semibold">On-Prem (Port 1433)</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Section: Cost Estimation & Architecture -->
+<div class="row g-4 mb-4">
+    <!-- Cost Estimation -->
+    <div class="col-lg-5" id="cost-estimation">
+        <div class="dashboard-card h-100">
+            <div class="card-header-custom">
+                <h5 class="card-title-custom">
+                    <i class="bi bi-currency-dollar text-warning"></i> Cost Estimation
+                </h5>
+                <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$0.00 / Month</span>
+            </div>
+            
+            <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3">
+                <canvas id="costChart"></canvas>
+            </div>
+            
+            <div class="cost-note">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                Chi phí chỉ dùng để minh họa trong môi trường học thuật LocalStack, không phải bảng giá chính thức của AWS.
+            </div>
+        </div>
+    </div>
+
+    <!-- Architecture Overview -->
+    <div class="col-lg-7" id="architecture">
+        <div class="dashboard-card h-100">
+            <div class="card-header-custom">
+                <h5 class="card-title-custom">
+                    <i class="bi bi-diagram-3 text-info"></i> Architecture Overview
+                </h5>
+                <span class="badge bg-info bg-opacity-10 text-info">Hybrid Flow</span>
+            </div>
+            
+            <div class="architecture-flow mt-3">
+                <!-- User / Lecturer Node -->
+                <div class="arch-node">
+                    <div class="arch-node-title text-primary">
+                        <i class="bi bi-person-workspace"></i> User / Lecturer (Client)
+                    </div>
+                    <div class="arch-node-desc">Gửi yêu cầu truy cập & kích hoạt di trú dữ liệu</div>
+                </div>
+
+                <div class="arch-arrow">
+                    <i class="bi bi-arrow-down-short"></i>
+                </div>
+
+                <!-- Web Application Dashboard Node -->
+                <div class="arch-node">
+                    <div class="arch-node-title text-indigo" style="color: #6366f1;">
+                        <i class="bi bi-file-code-fill"></i> ASP.NET Core 9 Dashboard
+                    </div>
+                    <div class="arch-node-desc">Dashboard giao diện và Client kết nối LocalStack API</div>
+                </div>
+
+                <div class="arch-arrow">
+                    <i class="bi bi-arrow-down-short"></i>
+                </div>
+
+                <!-- AWS Cloud Group -->
+                <div class="arch-cloud-group">
+                    <span class="arch-cloud-tag"><i class="bi bi-cloud-fill me-1"></i> AWS Cloud (LocalStack)</span>
+                    <div class="arch-cloud-nodes">
+                        <!-- Node Cloud S3 -->
+                        <div class="arch-node">
+                            <div class="arch-node-title text-warning">
+                                <i class="bi bi-archive-fill"></i> Amazon S3
+                            </div>
+                            <div class="arch-node-desc">Lưu trữ SQL Server Backup (.bak)</div>
+                        </div>
+                        
+                        <!-- Node Cloud DynamoDB -->
+                        <div class="arch-node">
+                            <div class="arch-node-title text-primary">
+                                <i class="bi bi-database-fill-gear"></i> DynamoDB Logs
+                            </div>
+                            <div class="arch-node-desc">Ghi nhật ký tiến trình chuyển đổi</div>
+                        </div>
+
+                        <!-- Node Cloud Lambda -->
+                        <div class="arch-node col-span-2 w-100" style="grid-column: span 2;">
+                            <div class="arch-node-title text-danger">
+                                <i class="bi bi-cpu-fill"></i> Lambda Self-test Function
+                            </div>
+                            <div class="arch-node-desc">Tự động kiểm tra liên thông hạ tầng sau di trú</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Initialize Cost Chart
+            const ctx = document.getElementById('costChart').getContext('2d');
+            
+            // Default simulated costs data
+            const costData = {
+                labels: ['S3 Storage', 'DynamoDB', 'Lambda', 'Other'],
+                datasets: [{
+                    data: [0.08, 0.10, 0.05, 0.07],
+                    backgroundColor: [
+                        '#6366f1', // Indigo S3
+                        '#10b981', // Emerald DynamoDB
+                        '#ef4444', // Red Lambda
+                        '#94a3b8'  // Gray Other
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 10
+                }]
+            };
+
+            const costChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: costData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    family: 'Plus Jakarta Sans',
+                                    size: 12
+                                },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: $${context.raw.toFixed(2)} USD`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+
+            // 2. Migration Simulator Logic
+            const btnStart = document.getElementById("btnStartMigration");
+            const progressBar = document.getElementById("migrationProgressBar");
+            const progressContainer = document.getElementById("migrationProgressContainer");
+            const consoleBox = document.getElementById("migrationConsole");
+            
+            // Timeline Steps elements
+            const step1 = document.getElementById("timeStep1");
+            const step2 = document.getElementById("timeStep2");
+            const step3 = document.getElementById("timeStep3");
+            const step4 = document.getElementById("timeStep4");
+
+            // Stat Cards status elements
+            const valS3 = document.getElementById("valS3");
+            const badgeS3 = document.getElementById("badgeS3");
+            const statIconS3 = document.getElementById("statIconS3");
+            const statCardS3 = document.getElementById("statCardS3");
+
+            const valDynamo = document.getElementById("valDynamo");
+            const badgeDynamo = document.getElementById("badgeDynamo");
+            const statIconDynamo = document.getElementById("statIconDynamo");
+            const statCardDynamo = document.getElementById("statCardDynamo");
+
+            const valLambda = document.getElementById("valLambda");
+            const badgeLambda = document.getElementById("badgeLambda");
+            const statIconLambda = document.getElementById("statIconLambda");
+            const statCardLambda = document.getElementById("statCardLambda");
+
+            const valCost = document.getElementById("valCost");
+            const costTotalBadge = document.getElementById("costTotalBadge");
+
+            // Health Score elements
+            const healthCircle = document.getElementById("healthScoreCircle");
+            const healthValue = document.getElementById("healthScoreValue");
+            const healthLabel = document.getElementById("healthScoreLabel");
+            const healthSub = document.getElementById("healthScoreSub");
+
+            // Console logging function
+            function logToConsole(text, type = 'info') {
+                const line = document.createElement("div");
+                line.className = "console-line";
+                
+                let prefix = "";
+                let classType = "text-white";
+                
+                if (type === 'info') {
+                    prefix = "[INFO] ";
+                    classType = "c-info";
+                } else if (type === 'tf') {
+                    prefix = "[TERRAFORM] ";
+                    classType = "c-tf";
+                } else if (type === 'success') {
+                    prefix = "[SUCCESS] ";
+                    classType = "c-success";
+                } else if (type === 'warning') {
+                    prefix = "[WARN] ";
+                    classType = "c-warning";
+                } else if (type === 'error') {
+                    prefix = "[ERROR] ";
+                    classType = "c-error";
+                } else if (type === 'lambda') {
+                    prefix = "[LAMBDA LOG] ";
+                    classType = "c-success";
+                }
+                
+                line.innerHTML = `<span class="${classType}">${prefix}${text}</span>`;
+                consoleBox.appendChild(line);
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+            }
+
+            // Update health gauge background degree based on score
+            function updateHealthScore(score, label, subText, color) {
+                healthValue.textContent = score;
+                healthLabel.textContent = label;
+                healthSub.textContent = subText;
+                
+                // Conic gradient mapping: score / 100 * 360 degrees
+                const deg = (score / 100) * 360;
+                healthCircle.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #334155 ${deg}deg)`;
+            }
+
+            // Animation helper
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+            btnStart.addEventListener("click", async function () {
+                // 1. Prepare UI
+                btnStart.disabled = true;
+                btnStart.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i> Migrating...`;
+                progressContainer.classList.remove("d-none");
+                
+                // Reset all states
+                consoleBox.innerHTML = "";
+                progressBar.style.width = "0%";
+                updateHealthScore(35, "On-Premise", "Hạ tầng tại local chưa chuyển đổi.", "#ef4444");
+
+                // Reset timeline items
+                [step1, step2, step3, step4].forEach(step => {
+                    step.className = "timeline-item";
+                    step.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-${step.id.replace('timeStep', '')}-circle-fill"></i>`;
+                });
+
+                // Reset Stat Cards
+                valS3.textContent = "Offline";
+                badgeS3.className = "badge bg-secondary bg-opacity-10 text-secondary";
+                badgeS3.textContent = "Pending";
+                
+                valDynamo.textContent = "Offline";
+                badgeDynamo.className = "badge bg-secondary bg-opacity-10 text-secondary";
+                badgeDynamo.textContent = "Pending";
+
+                valLambda.textContent = "Offline";
+                badgeLambda.className = "badge bg-secondary bg-opacity-10 text-secondary";
+                badgeLambda.textContent = "Pending";
+
+                valCost.textContent = "$0.00/month";
+                costTotalBadge.textContent = "$0.00/Month";
+
+                await sleep(500);
+
+                // --- START SIMULATION ---
+                logToConsole("Initializing Cloud Migration Pipeline...", "info");
+                logToConsole("Checking Terraform CLI compatibility... Found Terraform v1.8.0", "tf");
+                logToConsole("Checking LocalStack Edge connectivity on port 4566... Success", "info");
+                progressBar.style.width = "5%";
+                
+                await sleep(1000);
+
+                // STEP 1: SQL Server Backup Export
+                step1.classList.add("active");
+                step1.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
+                logToConsole("Initiating Step 1: SQL Server database backup export...", "info");
+                logToConsole("Connecting to SQL Server Instance [localhost:1433]...", "info");
+                await sleep(1000);
+                logToConsole("Executing command: BACKUP DATABASE [MigrationDb] TO DISK = 'd:\\backup\\migration_db_backup.bak' WITH FORMAT, INIT;", "info");
+                await sleep(1200);
+                logToConsole("Database backup successful. File size: 48.2 MB.", "success");
+                
+                // Complete Step 1
+                step1.classList.remove("active");
+                step1.classList.add("success");
+                step1.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
+                progressBar.style.width = "25%";
+                updateHealthScore(50, "Exporting", "Đã export xong dữ liệu On-premise.", "#f59e0b");
+
+                await sleep(1000);
+
+                // STEP 2: Upload backup to S3
+                step2.classList.add("active");
+                step2.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
+                logToConsole("Initiating Step 2: Resource creation and S3 upload...", "info");
+                logToConsole("Terraform apply: initializing aws_s3_bucket.backup_bucket", "tf");
+                await sleep(800);
+                logToConsole("aws_s3_bucket.backup_bucket: Creating...", "tf");
+                await sleep(1000);
+                logToConsole("aws_s3_bucket.backup_bucket: Creation complete [id=cloud-migration-backup-kedep]", "tf");
+                logToConsole("Uploading 'migration_db_backup.bak' to s3://cloud-migration-backup-kedep...", "info");
+                await sleep(1200);
+                logToConsole("File uploaded successfully. ETag: 'c52cf4df8b64e528574d2847a9893d56'", "success");
+
+                // Update S3 Stat Card
+                valS3.textContent = "Active";
+                badgeS3.className = "badge bg-success bg-opacity-10 text-success";
+                badgeS3.textContent = "Active";
+                statIconS3.className = "stat-icon success";
+
+                // Complete Step 2
+                step2.classList.remove("active");
+                step2.classList.add("success");
+                step2.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
+                progressBar.style.width = "50%";
+                updateHealthScore(65, "S3 Uploaded", "Đã lưu trữ an toàn bản sao dữ liệu trên Cloud.", "#3b82f6");
+
+                await sleep(1000);
+
+                // STEP 3: DynamoDB migration logs
+                step3.classList.add("active");
+                step3.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
+                logToConsole("Initiating Step 3: DynamoDB provisioning & logging...", "info");
+                logToConsole("Terraform apply: initializing aws_dynamodb_table.migration_logs", "tf");
+                await sleep(800);
+                logToConsole("aws_dynamodb_table.migration_logs: Creating...", "tf");
+                await sleep(1000);
+                logToConsole("aws_dynamodb_table.migration_logs: Creation complete [id=cloud-migration-logs-kedep]", "tf");
+                logToConsole("Writing event logs to DynamoDB table 'cloud-migration-logs-kedep'...", "info");
+                logToConsole("JSON Log: { 'MigrationID': 'MIG-992A', 'Source': 'On-Premise', 'Dest': 'S3-Bucket', 'Status': 'Success' }", "info");
+                await sleep(1000);
+                logToConsole("Log entry successfully appended.", "success");
+
+                // Update DynamoDB Stat Card
+                valDynamo.textContent = "Ready";
+                badgeDynamo.className = "badge bg-success bg-opacity-10 text-success";
+                badgeDynamo.textContent = "Ready";
+                statIconDynamo.className = "stat-icon success";
+
+                // Complete Step 3
+                step3.classList.remove("active");
+                step3.classList.add("success");
+                step3.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
+                progressBar.style.width = "75%";
+                updateHealthScore(80, "Logs Saved", "Nhật ký chuyển đổi đã được ghi vào NoSQL.", "#6366f1");
+
+                await sleep(1000);
+
+                // STEP 4: Lambda self test
+                step4.classList.add("active");
+                step4.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
+                logToConsole("Initiating Step 4: Provisioning Lambda self-test...", "info");
+                logToConsole("Terraform apply: initializing aws_lambda_function.self_test", "tf");
+                await sleep(800);
+                logToConsole("aws_lambda_function.self_test: Creating...", "tf");
+                await sleep(1000);
+                logToConsole("aws_lambda_function.self_test: Creation complete [id=cloud-migration-self-test-kedep]", "tf");
+                logToConsole("Invoking Lambda self-test trigger...", "info");
+                await sleep(800);
+                logToConsole("Lambda invocation started.", "info");
+                logToConsole("Reading S3 backup payload headers... OK", "lambda");
+                logToConsole("Checking LocalStack endpoints communication... OK", "lambda");
+                logToConsole("Validating DynamoDB migration entries... OK", "lambda");
+                await sleep(1200);
+                logToConsole("Lambda function executed. Execution time: 82ms. Memory: 128MB. Status code: 200.", "success");
+                logToConsole("Self-test output: 'ALL MIGRATION SYSTEMS OPERATIONAL - CHECKS PASSED'", "success");
+
+                // Update Lambda Stat Card
+                valLambda.textContent = "Passed";
+                badgeLambda.className = "badge bg-success bg-opacity-10 text-success";
+                badgeLambda.textContent = "Passed";
+                statIconLambda.className = "stat-icon success";
+
+                // Complete Step 4
+                step4.classList.remove("active");
+                step4.classList.add("success");
+                step4.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
+                progressBar.style.width = "100%";
+
+                // Update final cost card values
+                valCost.textContent = "$0.30/month";
+                costTotalBadge.textContent = "$0.30/Month";
+
+                await sleep(500);
+
+                // --- FINISH ---
+                logToConsole("Infrastructure cloud conversion finished successfully!", "success");
+                logToConsole("All systems running on LocalStack AWS simulator via Terraform IaC.", "success");
+                
+                updateHealthScore(92, "Cloud-Native", "Chuyển đổi thành công. Trạng thái: Tối ưu.", "#10b981");
+
+                btnStart.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> Migration Success`;
+                btnStart.className = "btn btn-success btn-start-migration";
+            });
+        });
+    </script>
+}
