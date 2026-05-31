@@ -9,6 +9,7 @@ builder.Services.AddScoped<ICloudResourceService, CloudResourceService>();
 builder.Services.AddScoped<IPreMigrationAssessmentService, PreMigrationAssessmentService>();
 builder.Services.AddScoped<IMigrationPackageService, MigrationPackageService>();
 builder.Services.AddScoped<IMigrationReportService, MigrationReportService>();
+builder.Services.AddScoped<IRestoreSimulationService, RestoreSimulationService>();
 
 var app = builder.Build();
 

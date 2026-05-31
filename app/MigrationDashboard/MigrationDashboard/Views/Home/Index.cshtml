@@ -288,15 +288,20 @@
                     <h5 class="card-title-custom">
                         <i class="bi bi-play-circle text-primary"></i> Trung tâm chuyển đổi
                     </h5>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
                         <form asp-controller="Migration" asp-action="Start" method="post" id="migrationForm">
-                            <button type="submit" class="btn btn-primary btn-start-migration" id="btnStartMigration">
+                            <button type="submit" class="btn btn-primary btn-start-migration" id="btnStartMigration" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600;">
                                 <i class="bi bi-rocket-takeoff me-2"></i> Bắt đầu chuyển đổi
                             </button>
                         </form>
+                        <form asp-controller="Restore" asp-action="Start" method="post" id="restoreForm">
+                            <button type="submit" class="btn btn-outline-success" id="btnRestoreSimulation" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600;">
+                                <i class="bi bi-shield-shaded me-2"></i> Mô phỏng khôi phục
+                            </button>
+                        </form>
                         <form asp-controller="Migration" asp-action="Rollback" method="post" id="rollbackForm">
-                            <button type="submit" class="btn btn-outline-danger" id="btnRollbackMigration" style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;">
-                                <i class="bi bi-arrow-counterclockwise me-2"></i> Mô phỏng khôi phục
+                            <button type="submit" class="btn btn-outline-danger" id="btnRollbackMigration" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600;">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i> Hoàn tác di trú (Rollback)
                             </button>
                         </form>
                     </div>
@@ -467,9 +472,24 @@
                     <span class="text-muted">Trạng thái Terraform:</span>
                     <span class="font-monospace text-success font-semibold">localstack.tfstate</span>
                 </div>
-                <div class="d-flex justify-content-between text-xs">
+                <div class="d-flex justify-content-between text-xs mb-1">
                     <span class="text-muted">Cơ sở dữ liệu SQL:</span>
                     <span class="font-monospace text-primary font-semibold">On-Prem (Cổng 1433)</span>
+                </div>
+                <div class="d-flex justify-content-between text-xs mb-1 pt-2 border-top border-secondary border-opacity-10 mt-2">
+                    <span class="text-muted">Gói di trú gần nhất:</span>
+                    <span class="font-monospace text-dark font-semibold text-truncate ms-2" style="max-width: 140px;" title="@Model.LatestMigrationId">@Model.LatestMigrationId</span>
+                </div>
+                <div class="d-flex justify-content-between text-xs">
+                    <span class="text-muted">Khôi phục thảm họa (DR):</span>
+                    @{
+                        string restoreBadgeColor = "secondary";
+                        if (Model.LatestRestoreStatus == "Completed") restoreBadgeColor = "success";
+                        else if (Model.LatestRestoreStatus == "Warning") restoreBadgeColor = "warning text-dark";
+                        else if (Model.LatestRestoreStatus == "Failed") restoreBadgeColor = "danger";
+                        else if (Model.LatestRestoreStatus == "Running") restoreBadgeColor = "info";
+                    }
+                    <span class="badge bg-@restoreBadgeColor bg-opacity-15 text-@restoreBadgeColor font-semibold px-1.5 py-0.5" style="font-size: 9px; border-radius: 4px;">@Model.LatestRestoreStatus</span>
                 </div>
             </div>
         </div>

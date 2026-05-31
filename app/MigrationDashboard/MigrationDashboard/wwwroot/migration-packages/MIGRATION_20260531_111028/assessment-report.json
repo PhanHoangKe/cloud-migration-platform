@@ -1,0 +1,66 @@
+﻿{
+  "migrationId": "MIGRATION_20260531_111028",
+  "generatedAt": "2026-05-31T04:10:29.103Z",
+  "sourceAppPath": "D:\\cloud-migration-platform\\app\\OnPremApp\\EduFlex - ĐTĐM",
+  "projectName": "EduFlex",
+  "targetFramework": "net9.0",
+  "databaseType": "N/A",
+  "readinessScore": 90,
+  "risks": [
+    {
+      "Level": "High",
+      "Description": "Ứng dụng đang lưu trữ tệp tải lên (uploads) trực tiếp trên thư mục local của máy chủ.",
+      "Recommendation": "Cần chuyển đổi lưu trữ tệp sang AWS S3 Object Storage để đảm bảo khả năng mở rộng (auto-scaling) và tính bền vững."
+    },
+    {
+      "Level": "Low",
+      "Description": "Mã nguồn ứng dụng có dung lượng tương đối lớn (> 10 MB).",
+      "Recommendation": "Kiểm tra và cấu hình bỏ qua các thư mục tạm (bin/obj/node_modules) khi đóng gói backup để tối ưu hóa thời gian tải lên Cloud."
+    }
+  ],
+  "recommendations": [
+    "Sử dụng Terraform để định nghĩa và tự động hóa việc khởi tạo hạ tầng Cloud giả lập.",
+    "Chuyển đổi tệp sao lưu dữ liệu SQL Server dạng .bak (được nén thành JSON) lên AWS S3.",
+    "Ghi và đồng bộ lịch sử, nhật ký chuyển đổi ứng dụng vào DynamoDB table.",
+    "Thiết lập AWS Lambda Function để thực hiện tự động kiểm thử kết nối (Self-test) sau khi di trú thành công.",
+    "Tách biệt và bảo mật thông tin tài khoản, chuỗi kết nối bằng cách sử dụng Biến môi trường hoặc AWS Secrets Manager thay vì ghi cứng trong code."
+  ],
+  "metrics": [
+    {
+      "Name": "Framework Target",
+      "Value": "net9.0",
+      "Status": "Success",
+      "Icon": "bi-braces"
+    },
+    {
+      "Name": "Cơ sở dữ liệu nguồn",
+      "Value": "Không xác định",
+      "Status": "Warning",
+      "Icon": "bi-database"
+    },
+    {
+      "Name": "Controllers / Pages",
+      "Value": "42 tệp",
+      "Status": "Success",
+      "Icon": "bi-cpu"
+    },
+    {
+      "Name": "Views (.cshtml)",
+      "Value": "78 tệp",
+      "Status": "Success",
+      "Icon": "bi-eye"
+    },
+    {
+      "Name": "Thư mục wwwroot",
+      "Value": "1256 tệp tin",
+      "Status": "Success",
+      "Icon": "bi-folder"
+    },
+    {
+      "Name": "Mã nguồn & Cấu hình",
+      "Value": "1691 tệp (99.32 MB)",
+      "Status": "Success",
+      "Icon": "bi-file-code"
+    }
+  ]
+}

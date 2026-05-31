@@ -13,6 +13,9 @@ public class CloudResourceDashboardViewModel
     public string LatestSelfTestStatus { get; set; } = "N/A";
     public int MigrationHealthScore { get; set; }
     public double EstimatedMonthlyCost { get; set; }
+    public string LatestMigrationId { get; set; } = "N/A";
+    public string LatestRestoreStatus { get; set; } = "N/A";
+    public bool RestoreAvailable { get; set; }
 
     public bool IsLocalStackAvailable { get; set; } = true;
     public string? S3ErrorMessage { get; set; }

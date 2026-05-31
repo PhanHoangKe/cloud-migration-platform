@@ -38,7 +38,10 @@ public class CloudResourceService : ICloudResourceService
         {
             S3BucketName = bucketName,
             DynamoDbTableName = tableName,
-            LambdaFunctionName = lambdaName
+            LambdaFunctionName = lambdaName,
+            LatestMigrationId = "N/A",
+            LatestRestoreStatus = "N/A",
+            RestoreAvailable = false
         };
 
         // Initialize Client Configurations
@@ -91,6 +94,25 @@ public class CloudResourceService : ICloudResourceService
                     .OrderByDescending(o => o.LastModified)
                     .Take(10)
                     .ToList();
+
+                // Find the latest Migration ID
+                string latestMigId = "N/A";
+                DateTime latestMigTime = DateTime.MinValue;
+                foreach (var obj in s3Response.S3Objects)
+                {
+                    var parts = obj.Key.Split('/');
+                    if (parts.Length > 1 && parts[0] == "migrations" && parts[1].StartsWith("MIGRATION_"))
+                    {
+                        var migrationId = parts[1];
+                        if (obj.LastModified.GetValueOrDefault() > latestMigTime)
+                        {
+                            latestMigTime = obj.LastModified.GetValueOrDefault();
+                            latestMigId = migrationId;
+                        }
+                    }
+                }
+                viewModel.LatestMigrationId = latestMigId;
+                viewModel.RestoreAvailable = latestMigId != "N/A";
             }
         }
         catch (Exception ex)
@@ -139,6 +161,37 @@ public class CloudResourceService : ICloudResourceService
                 else if (logs.Any(l => l.Status == "FAILED"))
                 {
                     viewModel.LatestSelfTestStatus = "Failed";
+                }
+
+                // Identify the latest Restore Simulation status
+                var restoreLogs = logs
+                    .Where(l => l.Status.StartsWith("RESTORE_"))
+                    .OrderByDescending(l => l.Timestamp)
+                    .ToList();
+
+                if (restoreLogs.Any())
+                {
+                    var latestRestore = restoreLogs.First();
+                    if (latestRestore.Status == "RESTORE_COMPLETED")
+                    {
+                        viewModel.LatestRestoreStatus = "Completed";
+                    }
+                    else if (latestRestore.Status == "RESTORE_WARNING")
+                    {
+                        viewModel.LatestRestoreStatus = "Warning";
+                    }
+                    else if (latestRestore.Status == "RESTORE_FAILED")
+                    {
+                        viewModel.LatestRestoreStatus = "Failed";
+                    }
+                    else if (latestRestore.Status == "RESTORE_STARTED")
+                    {
+                        viewModel.LatestRestoreStatus = "Running";
+                    }
+                    else
+                    {
+                        viewModel.LatestRestoreStatus = latestRestore.Status;
+                    }
                 }
             }
         }
