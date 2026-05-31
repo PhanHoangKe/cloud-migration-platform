@@ -17,10 +17,12 @@ namespace MigrationDashboard.Services;
 public class CloudResourceService : ICloudResourceService
 {
     private readonly IConfiguration _configuration;
+    private readonly ISecurityComplianceService _securityComplianceService;
 
-    public CloudResourceService(IConfiguration configuration)
+    public CloudResourceService(IConfiguration configuration, ISecurityComplianceService securityComplianceService)
     {
         _configuration = configuration;
+        _securityComplianceService = securityComplianceService;
     }
 
     public async Task<CloudResourceDashboardViewModel> GetDashboardDataAsync()
@@ -235,6 +237,16 @@ public class CloudResourceService : ICloudResourceService
         };
 
         viewModel.MigrationHealthScore = healthScore;
+
+        try
+        {
+            var securityData = await _securityComplianceService.GetSecurityComplianceDataAsync();
+            viewModel.SecurityComplianceScore = securityData.ComplianceScore;
+        }
+        catch
+        {
+            viewModel.SecurityComplianceScore = 0;
+        }
 
         return viewModel;
     }
