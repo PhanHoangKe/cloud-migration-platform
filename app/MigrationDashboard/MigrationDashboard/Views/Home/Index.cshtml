@@ -499,13 +499,71 @@
                     <tbody>
                         @if (Model.RecentBackups.Any())
                         {
-                            @foreach (var backup in Model.RecentBackups.Take(5))
+                            @foreach (var backup in Model.RecentBackups.Take(10))
                             {
                                 <tr>
                                     <td class="font-monospace text-xs text-dark font-semibold">
-                                        <div class="text-truncate" style="max-width: 220px;" title="@backup.Key">@backup.Key</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @{
+                                                string key = backup.Key;
+                                                string fileName = System.IO.Path.GetFileName(key);
+                                                string badgeColor = "secondary";
+                                                string fileTypeLabel = "Dữ liệu";
+                                                string fileIcon = "bi-file-earmark";
+
+                                                if (fileName.EndsWith(".zip"))
+                                                {
+                                                    badgeColor = "warning text-dark";
+                                                    fileTypeLabel = "Source ZIP";
+                                                    fileIcon = "bi-file-earmark-zip-fill";
+                                                }
+                                                else if (fileName == "migration-report.html")
+                                                {
+                                                    badgeColor = "danger";
+                                                    fileTypeLabel = "Report HTML";
+                                                    fileIcon = "bi-file-earmark-richtext-fill";
+                                                }
+                                                else if (fileName == "migration-report.json")
+                                                {
+                                                    badgeColor = "success";
+                                                    fileTypeLabel = "Report JSON";
+                                                    fileIcon = "bi-file-earmark-code-fill";
+                                                }
+                                                else if (fileName == "assessment-report.json")
+                                                {
+                                                    badgeColor = "info text-dark";
+                                                    fileTypeLabel = "Assessment";
+                                                    fileIcon = "bi-clipboard-data-fill";
+                                                }
+                                                else if (fileName == "migration-manifest.json")
+                                                {
+                                                    badgeColor = "primary";
+                                                    fileTypeLabel = "Manifest";
+                                                    fileIcon = "bi-file-earmark-text-fill";
+                                                }
+                                                else if (key.StartsWith("backups/") && key.EndsWith(".json"))
+                                                {
+                                                    badgeColor = "secondary";
+                                                    fileTypeLabel = "Legacy Backup";
+                                                    fileIcon = "bi-file-earmark-arrow-up-fill";
+                                                }
+                                            }
+                                            <i class="bi @fileIcon text-secondary fs-6"></i>
+                                            <div class="text-truncate" style="max-width: 180px;" title="@backup.Key">@fileName</div>
+                                            <span class="badge bg-@badgeColor bg-opacity-10 text-@badgeColor" style="font-size: 8px; padding: 2px 4px;">@fileTypeLabel</span>
+                                        </div>
+                                        <div class="text-xxs text-muted font-monospace mt-0.5" style="font-size: 9px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@backup.Key">@backup.Key</div>
                                     </td>
-                                    <td>@((backup.Size / 1024.0).ToString("F1")) KB</td>
+                                    <td>
+                                        @if (backup.Size >= 1048576)
+                                        {
+                                            <span>@((backup.Size / 1048576.0).ToString("F2")) MB</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@((backup.Size / 1024.0).ToString("F1")) KB</span>
+                                        }
+                                    </td>
                                     <td class="text-muted text-xs">@backup.LastModified.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                 </tr>
                             }

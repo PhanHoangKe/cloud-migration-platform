@@ -7,6 +7,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IMigrationService, MigrationService>();
 builder.Services.AddScoped<ICloudResourceService, CloudResourceService>();
 builder.Services.AddScoped<IPreMigrationAssessmentService, PreMigrationAssessmentService>();
+builder.Services.AddScoped<IMigrationPackageService, MigrationPackageService>();
+builder.Services.AddScoped<IMigrationReportService, MigrationReportService>();
 
 var app = builder.Build();
 

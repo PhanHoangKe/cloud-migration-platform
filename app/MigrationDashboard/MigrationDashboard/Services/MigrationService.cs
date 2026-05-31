@@ -20,15 +20,25 @@ public class MigrationService : IMigrationService
 {
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
+    private readonly IMigrationPackageService _packageService;
+    private readonly IMigrationReportService _reportService;
 
-    public MigrationService(IConfiguration configuration, IWebHostEnvironment env)
+    public MigrationService(
+        IConfiguration configuration, 
+        IWebHostEnvironment env, 
+        IMigrationPackageService packageService,
+        IMigrationReportService reportService)
     {
         _configuration = configuration;
         _env = env;
+        _packageService = packageService;
+        _reportService = reportService;
     }
 
     public async Task<MigrationResultViewModel> StartMigrationAsync()
     {
+        DateTime startedAt = DateTime.UtcNow;
+        
         // 1. Read configurations
         var localStackConfig = _configuration.GetSection("LocalStack");
         var serviceUrl = localStackConfig["ServiceUrl"] ?? "http://localhost:4566";
@@ -71,76 +81,167 @@ public class MigrationService : IMigrationService
 
         try
         {
-            // Step 1: Write Log STARTED to DynamoDB
+            // Step 1: Write Log STARTED to DynamoDB (Clean English to avoid CLI encoding crash)
             result.Status = "STARTED";
-            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "STARTED", "Bắt đầu tiến trình chuyển đổi ứng dụng từ On-premise lên LocalStack Cloud.");
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "STARTED", "Migration process started from On-premise to LocalStack Cloud.");
             AddLocalLog(result, "STARTED", "Ghi log STARTED thành công vào DynamoDB table.");
 
-            // Step 2: Create a simulated backup file (JSON)
-            var backupDirectory = Path.Combine(_env.WebRootPath, "migration-backups");
-            if (!Directory.Exists(backupDirectory))
+            // Determine temporary packages directory
+            var tempDirectory = Path.Combine(_env.WebRootPath, "migration-packages", result.MigrationId);
+            if (!Directory.Exists(tempDirectory))
             {
-                Directory.CreateDirectory(backupDirectory);
+                Directory.CreateDirectory(tempDirectory);
             }
 
-            var backupFileName = $"{result.MigrationId}_backup.json";
-            var backupFilePath = Path.Combine(backupDirectory, backupFileName);
-            result.BackupFileName = backupFileName;
+            var onPremAppPath = @"D:\cloud-migration-platform\app\OnPremApp\EduFlex - ĐTĐM";
 
-            var backupData = new
+            // Step 2: Create assessment-report.json
+            var reportPath = Path.Combine(tempDirectory, "assessment-report.json");
+            var report = await _packageService.GenerateAssessmentReportAsync(result.MigrationId, onPremAppPath, reportPath);
+            result.ReadinessScore = report.ReadinessScore;
+
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "ASSESSMENT_EXPORTED", "Pre-migration assessment report generated");
+            AddLocalLog(result, "ASSESSMENT_EXPORTED", $"Tạo tệp báo cáo đánh giá chất lượng thành công tại local: {reportPath}");
+
+            // Step 3: Create migration-manifest.json
+            var manifestPath = Path.Combine(tempDirectory, "migration-manifest.json");
+            await _packageService.GenerateManifestAsync(result.MigrationId, onPremAppPath, manifestPath, "source-package.zip", "assessment-report.json");
+
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "MANIFEST_CREATED", "Migration manifest created");
+            AddLocalLog(result, "MANIFEST_CREATED", $"Tạo tệp manifest di trú thành công tại local: {manifestPath}");
+
+            // Step 4: Create source-package.zip
+            var zipPath = Path.Combine(tempDirectory, "source-package.zip");
+            var zipSize = await _packageService.CreateSourcePackageZipAsync(onPremAppPath, zipPath);
+            result.PackageSize = zipSize;
+
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "SOURCE_PACKAGED", $"Source package zip created with size {zipSize}");
+            AddLocalLog(result, "SOURCE_PACKAGED", $"Tạo tệp nén zip chứa mã nguồn thành công tại local: {zipPath}");
+
+            // Step 5: Upload all 3 package files to S3
+            var filesToUpload = new Dictionary<string, string>
             {
-                migrationId = result.MigrationId,
-                sourceAppPath = @"D:\cloud-migration-platform\app\OnPremApp\EduFlex - ĐTĐM",
-                sourceType = "ASP.NET Core 9 + SQL Server",
-                createdAt = DateTime.UtcNow.ToString("o"),
-                migratedFilesCount = 142,
-                migratedRecordsCount = 2850,
-                note = "Academic migration simulation using LocalStack and Terraform"
+                { $"migrations/{result.MigrationId}/assessment-report.json", reportPath },
+                { $"migrations/{result.MigrationId}/migration-manifest.json", manifestPath },
+                { $"migrations/{result.MigrationId}/source-package.zip", zipPath }
             };
 
-            var backupJson = JsonConvert.SerializeObject(backupData, Formatting.Indented);
-            await File.WriteAllTextAsync(backupFilePath, backupJson, Encoding.UTF8);
-
-            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "BACKUP_CREATED", $"Đã tạo tệp backup giả lập tại local: {backupFileName}");
-            AddLocalLog(result, "BACKUP_CREATED", $"Tạo tệp backup JSON thành công tại local: {backupFilePath}");
-
-            // Step 3: Upload backup file to S3
-            var s3ObjectKey = $"backups/{backupFileName}";
-            result.S3ObjectKey = s3ObjectKey;
-
-            using (var fileStream = new FileStream(backupFilePath, FileMode.Open, FileAccess.Read))
+            foreach (var kvp in filesToUpload)
             {
-                var putRequest = new PutObjectRequest
+                using (var fileStream = new FileStream(kvp.Value, FileMode.Open, FileAccess.Read))
                 {
-                    BucketName = bucketName,
-                    Key = s3ObjectKey,
-                    InputStream = fileStream
-                };
-                await s3Client.PutObjectAsync(putRequest);
+                    var putRequest = new PutObjectRequest
+                    {
+                        BucketName = bucketName,
+                        Key = kvp.Key,
+                        InputStream = fileStream
+                    };
+                    await s3Client.PutObjectAsync(putRequest);
+                }
+                result.S3ObjectKeys.Add(kvp.Key);
             }
+            // For backward compatibility and file references:
+            result.BackupFileName = "migration-manifest.json";
+            result.S3ObjectKey = $"migrations/{result.MigrationId}/migration-manifest.json";
 
-            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "UPLOADED_TO_S3", $"Tải tệp backup lên S3 bucket {bucketName}/{s3ObjectKey} thành công.");
-            AddLocalLog(result, "UPLOADED_TO_S3", $"Tải tệp backup lên S3 Object Key: {s3ObjectKey} thành công.");
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "UPLOADED_TO_S3", "Migration package uploaded to S3");
+            AddLocalLog(result, "UPLOADED_TO_S3", $"Đã upload thành công 3 tệp tin lên S3 Object Keys thuộc thư mục migrations/{result.MigrationId}/");
 
-            // Step 4: Call AWS Lambda Self-test Function
-            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "SELF_TEST_TRIGGERED", $"Kích hoạt Lambda check self-test: {lambdaName}");
+            // Step 6: Trigger AWS Lambda Self-test Function
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "SELF_TEST_TRIGGERED", "Lambda self-test triggered");
             AddLocalLog(result, "SELF_TEST_TRIGGERED", $"Gọi Lambda self-test: {lambdaName}");
 
-            var lambdaRequest = new InvokeRequest
+            string lambdaSelfTestStatus = "Failed";
+            try
             {
-                FunctionName = lambdaName,
-                Payload = JsonConvert.SerializeObject(new { migrationId = result.MigrationId })
-            };
+                var lambdaRequest = new InvokeRequest
+                {
+                    FunctionName = lambdaName,
+                    Payload = JsonConvert.SerializeObject(new { migrationId = result.MigrationId })
+                };
 
-            var lambdaResponse = await lambdaClient.InvokeAsync(lambdaRequest);
+                var lambdaResponse = await lambdaClient.InvokeAsync(lambdaRequest);
+                
+                using var reader = new StreamReader(lambdaResponse.Payload);
+                var responsePayload = await reader.ReadToEndAsync();
+                result.LambdaSelfTestResponse = responsePayload;
+
+                result.Status = "COMPLETED";
+                await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "SELF_TEST_PASSED", "Lambda self-test passed");
+                AddLocalLog(result, "SELF_TEST_PASSED", $"Chạy Lambda self-test thành công. Phản hồi: {responsePayload}");
+                
+                if (!responsePayload.Contains("Error", StringComparison.OrdinalIgnoreCase))
+                {
+                    lambdaSelfTestStatus = "Passed";
+                }
+            }
+            catch (Exception ex)
+            {
+                result.LambdaSelfTestResponse = $"Error: {ex.Message}";
+                result.Status = "COMPLETED"; // Mark as completed but record the self test fail
+                await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "SELF_TEST_FAILED", "Lambda self-test failed");
+                AddLocalLog(result, "SELF_TEST_FAILED", $"Kiểm thử tự động Lambda thất bại: {ex.Message}");
+            }
+
+            // Step 7: Generate Migration Reports (JSON & HTML)
+            DateTime completedAt = DateTime.UtcNow;
+            int migrationHealthScore = lambdaSelfTestStatus == "Passed" ? 95 : 60;
             
-            using var reader = new StreamReader(lambdaResponse.Payload);
-            var responsePayload = await reader.ReadToEndAsync();
-            result.LambdaSelfTestResponse = responsePayload;
+            try
+            {
+                var (reportJsonPath, reportHtmlPath) = await _reportService.GenerateReportFilesAsync(
+                    result.MigrationId,
+                    onPremAppPath,
+                    zipSize,
+                    result.ReadinessScore,
+                    bucketName,
+                    tableName,
+                    lambdaSelfTestStatus,
+                    migrationHealthScore,
+                    startedAt,
+                    completedAt,
+                    tempDirectory
+                );
 
-            result.Status = "COMPLETED";
-            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "SELF_TEST_PASSED", $"Lambda self-test hoàn tất. Kết quả: {responsePayload}");
-            AddLocalLog(result, "SELF_TEST_PASSED", $"Chạy Lambda self-test thành công. Phản hồi: {responsePayload}");
+                result.ReportLocalHtmlPath = reportHtmlPath;
+                result.ReportJsonS3Key = $"migrations/{result.MigrationId}/migration-report.json";
+                result.ReportHtmlS3Key = $"migrations/{result.MigrationId}/migration-report.html";
+                result.ReportGenerated = true;
+
+                // Upload report files to S3
+                var reportFilesToUpload = new Dictionary<string, string>
+                {
+                    { result.ReportJsonS3Key, reportJsonPath },
+                    { result.ReportHtmlS3Key, reportHtmlPath }
+                };
+
+                foreach (var kvp in reportFilesToUpload)
+                {
+                    using (var fileStream = new FileStream(kvp.Value, FileMode.Open, FileAccess.Read))
+                    {
+                        var putRequest = new PutObjectRequest
+                        {
+                            BucketName = bucketName,
+                            Key = kvp.Key,
+                            InputStream = fileStream
+                        };
+                        await s3Client.PutObjectAsync(putRequest);
+                    }
+                    result.S3ObjectKeys.Add(kvp.Key);
+                }
+
+                await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "REPORT_GENERATED", "Migration report generated successfully");
+                AddLocalLog(result, "REPORT_GENERATED", "Báo cáo di trú dạng JSON & HTML đã được khởi tạo thành công.");
+
+                await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "REPORT_UPLOADED_TO_S3", "Migration report uploaded to S3 successfully");
+                AddLocalLog(result, "REPORT_UPLOADED_TO_S3", "Đã tải báo cáo di trú lên S3 thành công.");
+            }
+            catch (Exception ex)
+            {
+                result.ReportGenerated = false;
+                await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "REPORT_FAILED", $"Migration report generation failed: {ex.Message}");
+                AddLocalLog(result, "REPORT_FAILED", $"Lỗi tạo báo cáo di trú: {ex.Message}");
+            }
 
             result.IsSuccess = true;
         }

@@ -1,0 +1,21 @@
+﻿{
+  "migrationId": "MIGRATION_20260531_105935",
+  "createdAt": "2026-05-31T03:59:36.279Z",
+  "sourceApplication": "EduFlex",
+  "sourcePath": "D:\\cloud-migration-platform\\app\\OnPremApp\\EduFlex - ĐTĐM",
+  "migrationStrategy": "Re-platform",
+  "cloudTarget": "LocalStack AWS Simulation",
+  "services": [
+    "S3",
+    "DynamoDB",
+    "Lambda",
+    "IAM",
+    "Terraform"
+  ],
+  "files": [
+    "assessment-report.json",
+    "source-package.zip"
+  ],
+  "packageVersion": "1.0",
+  "academicNote": "This package is generated for academic cloud migration simulation."
+}
