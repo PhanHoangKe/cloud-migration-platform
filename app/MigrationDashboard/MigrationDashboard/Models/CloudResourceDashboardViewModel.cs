@@ -21,4 +21,6 @@ public class CloudResourceDashboardViewModel
 
     public List<S3ObjectViewModel> RecentBackups { get; set; } = new();
     public List<MigrationLogItem> RecentLogs { get; set; } = new();
+    public List<CostItemViewModel> CostItems { get; set; } = new();
+    public List<ComparisonItemViewModel> ComparisonItems { get; set; } = new();
 }

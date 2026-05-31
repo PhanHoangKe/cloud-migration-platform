@@ -449,19 +449,46 @@
 <div class="row g-4 mb-4">
     <!-- Cost Estimation -->
     <div class="col-lg-5" id="cost-estimation">
-        <div class="dashboard-card h-100">
-            <div class="card-header-custom">
-                <h5 class="card-title-custom">
-                    <i class="bi bi-currency-dollar text-warning"></i> Cost Estimation
-                </h5>
-                <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$@Model.EstimatedMonthlyCost.ToString("F2") / Month</span>
+        <div class="dashboard-card h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="card-header-custom">
+                    <h5 class="card-title-custom">
+                        <i class="bi bi-currency-dollar text-warning"></i> Cost Estimation
+                    </h5>
+                    <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$@Model.EstimatedMonthlyCost.ToString("F2") / Month</span>
+                </div>
+                
+                <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3">
+                    <canvas id="costChart"></canvas>
+                </div>
+
+                <div class="table-responsive mt-3 text-xs">
+                    <table class="table table-sm table-borderless align-middle mb-0">
+                        <thead>
+                            <tr class="border-bottom text-muted">
+                                <th>Dịch vụ</th>
+                                <th class="text-end">Chi phí / Tháng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cost in Model.CostItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="font-bold text-dark">@cost.ServiceName</div>
+                                        <div class="text-muted text-xxs" style="font-size: 10px;">@cost.Description</div>
+                                    </td>
+                                    <td class="text-end font-monospace font-semibold text-dark">
+                                        $@cost.CostPerMonth.ToString("F2")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
             
-            <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3">
-                <canvas id="costChart"></canvas>
-            </div>
-            
-            <div class="cost-note">
+            <div class="cost-note mt-3">
                 <i class="bi bi-exclamation-triangle-fill me-1"></i>
                 Chi phí chỉ dùng để minh họa trong môi trường học thuật LocalStack, không phải bảng giá chính thức của AWS.
             </div>
@@ -533,9 +560,60 @@
                     </div>
                 </div>
             </div>
+</div>
+
+<!-- Section: Before/After Comparison -->
+<section id="comparison" class="mb-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header-custom border-bottom pb-2">
+                    <h5 class="card-title-custom text-indigo">
+                        <i class="bi bi-arrow-left-right text-indigo me-2"></i> Before / After Comparison
+                    </h5>
+                    <span class="badge bg-indigo bg-opacity-10 text-indigo">On-Premise vs. Cloud-Native</span>
+                </div>
+                
+                <div class="table-responsive mt-3">
+                    <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0 10px;">
+                        <thead>
+                            <tr class="text-uppercase text-xs text-muted tracking-wider border-bottom">
+                                <th class="pb-3" style="width: 20%;">Tiêu chí</th>
+                                <th class="pb-3" style="width: 40%;">Môi trường On-Premise</th>
+                                <th class="pb-3" style="width: 40%;">Môi trường Cloud (Simulation)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ComparisonItems)
+                            {
+                                <tr class="border-bottom-0">
+                                    <td class="ps-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="bg-indigo bg-opacity-10 text-indigo rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; min-width: 32px;">
+                                                <i class="bi @item.Icon"></i>
+                                            </div>
+                                            <span class="font-bold text-dark text-sm">@item.Category</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="p-3 rounded-3 text-sm text-secondary bg-danger bg-opacity-5 border border-danger border-opacity-10">
+                                            @item.OnPremiseDetails
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="p-3 rounded-3 text-sm text-dark bg-success bg-opacity-5 border border-success border-opacity-10 font-semibold">
+                                            @item.CloudDetails
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <script>

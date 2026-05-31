@@ -154,13 +154,28 @@ public class CloudResourceService : ICloudResourceService
             viewModel.LambdaErrorMessage = $"Không kết nối hoặc định danh được Lambda Function '{lambdaName}': {ex.Message}";
         }
 
-        // Compute simulated cost based on resources
-        double cost = 0.0;
-        if (viewModel.BackupFilesCount > 0) cost += 0.08;
-        if (viewModel.MigrationLogsCount > 0) cost += 0.10;
-        if (hasPassedSelfTest) cost += 0.05;
-        if (cost > 0) cost += 0.07; // Other/static simulated charges
-        viewModel.EstimatedMonthlyCost = cost;
+        // Populate simulated cost list
+        viewModel.CostItems = new List<CostItemViewModel>
+        {
+            new() { ServiceName = "S3 Storage", Description = "Lưu trữ backup tệp tin JSON giả lập", CostPerMonth = viewModel.BackupFilesCount > 0 ? 0.08 : 0.0 },
+            new() { ServiceName = "DynamoDB Requests", Description = "Ghi logs trạng thái tiến trình di trú", CostPerMonth = viewModel.MigrationLogsCount > 0 ? 0.10 : 0.0 },
+            new() { ServiceName = "Lambda Invocations", Description = "Kích hoạt kiểm thử tự động sau di trú", CostPerMonth = hasPassedSelfTest ? 0.05 : 0.0 },
+            new() { ServiceName = "Local Development/Docker", Description = "Môi trường giả lập LocalStack không phát sinh chi phí", CostPerMonth = 0.00 },
+            new() { ServiceName = "Network/Other", Description = "Chi phí truyền dữ liệu và dịch vụ khác", CostPerMonth = (viewModel.BackupFilesCount > 0 || viewModel.MigrationLogsCount > 0) ? 0.07 : 0.0 }
+        };
+
+        viewModel.EstimatedMonthlyCost = viewModel.CostItems.Sum(c => c.CostPerMonth);
+
+        // Populate before/after comparison list
+        viewModel.ComparisonItems = new List<ComparisonItemViewModel>
+        {
+            new() { Category = "Hạ tầng", OnPremiseDetails = "Cấu hình thủ công trên máy local/server vật lý", CloudDetails = "Hạ tầng được mô tả bằng Terraform, có thể apply/destroy tự động", Icon = "bi-boxes" },
+            new() { Category = "Lưu trữ file", OnPremiseDetails = "Lưu trên ổ đĩa máy chủ", CloudDetails = "Lưu trên S3 object storage", Icon = "bi-archive" },
+            new() { Category = "Ghi log", OnPremiseDetails = "Log local hoặc SQL Server", CloudDetails = "Migration logs lưu trên DynamoDB", Icon = "bi-journal-text" },
+            new() { Category = "Kiểm thử sau triển khai", OnPremiseDetails = "Kiểm tra thủ công", CloudDetails = "Lambda self-test tự động kiểm tra S3/DynamoDB", Icon = "bi-lightning-charge" },
+            new() { Category = "Khả năng phục hồi", OnPremiseDetails = "Khó rollback, phụ thuộc backup thủ công", CloudDetails = "Có backup object, log trạng thái và rollback simulation", Icon = "bi-arrow-counterclockwise" },
+            new() { Category = "Chi phí", OnPremiseDetails = "Khó ước tính chi tiết theo dịch vụ", CloudDetails = "Có bảng cost estimation theo từng thành phần", Icon = "bi-cash-stack" }
+        };
 
         viewModel.MigrationHealthScore = healthScore;
 
