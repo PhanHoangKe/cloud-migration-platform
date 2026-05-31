@@ -11,19 +11,41 @@ namespace MigrationDashboard.Services;
 public class PreMigrationAssessmentService : IPreMigrationAssessmentService
 {
     private static readonly string[] ExcludedFolders = { "bin", "obj", "node_modules", ".git", ".vscode", ".github" };
+    private readonly OnPremiseAppOptions _options;
 
-    public PreMigrationAssessmentViewModel RunAssessment(string onPremAppPath)
+    public PreMigrationAssessmentService(Microsoft.Extensions.Options.IOptions<OnPremiseAppOptions> options)
     {
+        _options = options.Value;
+    }
+
+    public PreMigrationAssessmentViewModel RunAssessment(string? onPremAppPath = null)
+    {
+        onPremAppPath = onPremAppPath ?? _options.SourcePath;
         var viewModel = new PreMigrationAssessmentViewModel
         {
             OnPremAppPath = onPremAppPath,
-            IsScanned = true
+            IsScanned = true,
+            ProjectName = _options.DisplayName
         };
 
         if (string.IsNullOrEmpty(onPremAppPath) || !Directory.Exists(onPremAppPath))
         {
             viewModel.ScanError = $"Thư mục ứng dụng On-Premise không tồn tại hoặc không truy cập được tại đường dẫn: '{onPremAppPath}'";
-            viewModel.ReadinessScore = 0;
+            viewModel.ReadinessScore = 15;
+            viewModel.RecommendedMigrationStrategy = "Re-host";
+            viewModel.Metrics.Add(new AssessmentMetricViewModel
+            {
+                Name = "Cấu hình nguồn",
+                Value = "Ngoại tuyến / Không tồn tại",
+                Status = "Warning",
+                Icon = "bi-exclamation-triangle"
+            });
+            viewModel.RiskItems.Add(new AssessmentRiskItemViewModel
+            {
+                Level = "High",
+                Description = $"Đường dẫn thư mục nguồn không tồn tại: {onPremAppPath}",
+                Recommendation = "Kiểm tra lại cấu hình OnPremiseApp:SourcePath trong tệp appsettings.json."
+            });
             return viewModel;
         }
 

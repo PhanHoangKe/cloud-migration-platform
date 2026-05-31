@@ -1,9 +1,14 @@
 using MigrationDashboard.Services;
+using MigrationDashboard.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register Options
+builder.Services.Configure<OnPremiseAppOptions>(builder.Configuration.GetSection("OnPremiseApp"));
+
 builder.Services.AddScoped<IMigrationService, MigrationService>();
 builder.Services.AddScoped<ICloudResourceService, CloudResourceService>();
 builder.Services.AddScoped<IPreMigrationAssessmentService, PreMigrationAssessmentService>();

@@ -1,4 +1,5 @@
 @model MigrationDashboard.Models.MigrationResultViewModel
+@inject Microsoft.Extensions.Options.IOptions<MigrationDashboard.Models.OnPremiseAppOptions> OnPremAppOptions
 @{
     ViewData["Title"] = "Kết quả chuyển đổi";
     
@@ -63,7 +64,7 @@
                         <ul class="mb-0 mt-1">
                             <li>Xác minh LocalStack đang chạy trực tiếp trên cổng mặc định <code class="text-danger">http://localhost:4566</code>.</li>
                             <li>Đảm bảo bạn đã chạy lệnh <code class="font-semibold text-danger">terraform apply</code> trong thư mục <code class="font-semibold text-dark">terraform/</code> để thiết lập S3 Bucket, DynamoDB Table và Lambda Function trước.</li>
-                            <li>Kiểm tra quyền truy cập thư mục ứng dụng nguồn <code class="font-semibold text-dark">EduFlex - ĐTĐM</code>.</li>
+                            <li>Kiểm tra quyền truy cập thư mục ứng dụng nguồn <code class="font-semibold text-dark">@OnPremAppOptions.Value.DisplayName</code>.</li>
                         </ul>
                     </div>
                 </div>

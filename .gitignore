@@ -39,3 +39,9 @@ Thumbs.db
 # Private real on-premise application - do not commit
 app/OnPremApp/EduFlex - ĐTĐM/
 app/OnPremApp/EduFlex/
+
+# Generated migration/restore artifacts - do not commit
+app/MigrationDashboard/MigrationDashboard/wwwroot/migration-packages/
+app/MigrationDashboard/MigrationDashboard/wwwroot/restore-simulations/
+app/MigrationDashboard/MigrationDashboard/wwwroot/migration-backups/
+app/MigrationDashboard/MigrationDashboard/wwwroot/temp/

@@ -4,5 +4,5 @@ namespace MigrationDashboard.Services;
 
 public interface IPreMigrationAssessmentService
 {
-    PreMigrationAssessmentViewModel RunAssessment(string onPremAppPath);
+    PreMigrationAssessmentViewModel RunAssessment(string? onPremAppPath = null);
 }

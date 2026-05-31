@@ -23,19 +23,22 @@ public class MigrationService : IMigrationService
     private readonly IMigrationPackageService _packageService;
     private readonly IMigrationReportService _reportService;
     private readonly IDatabaseExportService _dbExportService;
+    private readonly OnPremiseAppOptions _options;
 
     public MigrationService(
         IConfiguration configuration, 
         IWebHostEnvironment env, 
         IMigrationPackageService packageService,
         IMigrationReportService reportService,
-        IDatabaseExportService dbExportService)
+        IDatabaseExportService dbExportService,
+        Microsoft.Extensions.Options.IOptions<OnPremiseAppOptions> options)
     {
         _configuration = configuration;
         _env = env;
         _packageService = packageService;
         _reportService = reportService;
         _dbExportService = dbExportService;
+        _options = options.Value;
     }
 
     public async Task<MigrationResultViewModel> StartMigrationAsync()
@@ -84,9 +87,18 @@ public class MigrationService : IMigrationService
 
         try
         {
+            var onPremAppPath = _options.SourcePath;
+            if (string.IsNullOrEmpty(onPremAppPath) || !Directory.Exists(onPremAppPath))
+            {
+                result.IsSuccess = false;
+                result.Status = "FAILED";
+                result.ErrorMessage = $"Lỗi thư mục nguồn: Thư mục dự án On-Premise '{_options.DisplayName}' không tồn tại hoặc không truy cập được tại đường dẫn: '{onPremAppPath}'. Vui lòng cấu hình đúng SourcePath trong tệp appsettings.json.";
+                return result;
+            }
+
             // Step 1: Write Log STARTED to DynamoDB (Clean English to avoid CLI encoding crash)
             result.Status = "STARTED";
-            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "STARTED", "Migration process started from On-premise to LocalStack Cloud.");
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "STARTED", $"Migration process started for {_options.DisplayName} from On-premise to LocalStack Cloud.");
             AddLocalLog(result, "STARTED", "Ghi log STARTED thành công vào DynamoDB table.");
 
             // Determine temporary packages directory
@@ -95,8 +107,6 @@ public class MigrationService : IMigrationService
             {
                 Directory.CreateDirectory(tempDirectory);
             }
-
-            var onPremAppPath = @"D:\cloud-migration-platform\app\OnPremApp\EduFlex - ĐTĐM";
 
             // Step 2: Create assessment-report.json
             var reportPath = Path.Combine(tempDirectory, "assessment-report.json");

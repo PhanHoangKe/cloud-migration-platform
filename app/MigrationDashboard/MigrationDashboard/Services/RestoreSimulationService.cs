@@ -19,11 +19,13 @@ public class RestoreSimulationService : IRestoreSimulationService
 {
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
+    private readonly OnPremiseAppOptions _options;
 
-    public RestoreSimulationService(IConfiguration configuration, IWebHostEnvironment env)
+    public RestoreSimulationService(IConfiguration configuration, IWebHostEnvironment env, Microsoft.Extensions.Options.IOptions<OnPremiseAppOptions> options)
     {
         _configuration = configuration;
         _env = env;
+        _options = options.Value;
     }
 
     public async Task<RestoreResultViewModel> RunRestoreSimulationAsync()
@@ -137,7 +139,7 @@ public class RestoreSimulationService : IRestoreSimulationService
             {
                 new { Name = "assessment-report.json", Required = true, Description = "Báo cáo đánh giá chất lượng On-premise" },
                 new { Name = "migration-manifest.json", Required = true, Description = "Tệp Manifest định nghĩa hạ tầng đám mây đích" },
-                new { Name = "source-package.zip", Required = true, Description = "Gói mã nguồn nén ZIP dự án EduFlex" },
+                new { Name = "source-package.zip", Required = true, Description = $"Gói mã nguồn nén ZIP dự án {_options.DisplayName}" },
                 new { Name = "database-export.json", Required = false, Description = "Bản xuất dữ liệu SQL Server On-premise dạng JSON" },
                 new { Name = "migration-report.json", Required = false, Description = "Báo cáo di trú dạng JSON chứa metadata chi phí" },
                 new { Name = "migration-report.html", Required = false, Description = "Báo cáo di trú định dạng HTML tĩnh" }

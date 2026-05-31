@@ -7,7 +7,6 @@ namespace MigrationDashboard.Controllers;
 public class AssessmentController : Controller
 {
     private readonly IPreMigrationAssessmentService _assessmentService;
-    private const string OnPremPath = @"D:\cloud-migration-platform\app\OnPremApp\EduFlex - ĐTĐM";
 
     public AssessmentController(IPreMigrationAssessmentService assessmentService)
     {
@@ -17,7 +16,7 @@ public class AssessmentController : Controller
     [HttpGet]
     public IActionResult Index()
     {
-        var viewModel = _assessmentService.RunAssessment(OnPremPath);
+        var viewModel = _assessmentService.RunAssessment();
         return View(viewModel);
     }
 

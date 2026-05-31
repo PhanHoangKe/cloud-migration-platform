@@ -4,10 +4,21 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
+using MigrationDashboard.Models;
+using Microsoft.Extensions.Options;
+using System.Collections.Generic;
+
 namespace MigrationDashboard.Services;
 
 public class MigrationReportService : IMigrationReportService
 {
+    private readonly OnPremiseAppOptions _options;
+
+    public MigrationReportService(IOptions<OnPremiseAppOptions> options)
+    {
+        _options = options.Value;
+    }
+
     public async Task<(string jsonPath, string htmlPath)> GenerateReportFilesAsync(
         string migrationId,
         string sourcePath,
@@ -31,13 +42,16 @@ public class MigrationReportService : IMigrationReportService
         }
 
         var durationSeconds = Math.Round((completedAt - startedAt).TotalSeconds, 2);
-        var projectName = "EduFlex - ĐTĐM";
+        var projectName = _options.DisplayName;
         try
         {
-            var files = Directory.GetFiles(sourcePath, "*.csproj");
-            if (files.Length > 0)
+            if (Directory.Exists(sourcePath))
             {
-                projectName = Path.GetFileNameWithoutExtension(files[0]);
+                var files = Directory.GetFiles(sourcePath, "*.csproj");
+                if (files.Length > 0)
+                {
+                    projectName = Path.GetFileNameWithoutExtension(files[0]);
+                }
             }
         }
         catch { }
