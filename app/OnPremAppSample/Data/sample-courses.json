@@ -1,0 +1,14 @@
+﻿[
+  {
+    "Id": 1,
+    "Name": "Cloud Computing Fundamentals",
+    "Category": "Course",
+    "Price": 0
+  },
+  {
+    "Id": 2,
+    "Name": "ASP.NET Core Migration Demo",
+    "Category": "Course",
+    "Price": 0
+  }
+]
