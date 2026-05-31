@@ -168,6 +168,81 @@ public class MigrationService : IMigrationService
         return result;
     }
 
+    public async Task<MigrationResultViewModel> RollbackMigrationAsync()
+    {
+        var localStackConfig = _configuration.GetSection("LocalStack");
+        var serviceUrl = localStackConfig["ServiceUrl"] ?? "http://localhost:4566";
+        var region = localStackConfig["Region"] ?? "ap-southeast-1";
+        var accessKey = localStackConfig["AccessKey"] ?? "test";
+        var secretKey = localStackConfig["SecretKey"] ?? "test";
+        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
+
+        var result = new MigrationResultViewModel
+        {
+            MigrationId = "MIGRATION_LATEST",
+            IsSuccess = false,
+            Status = "ROLLBACK_FAILED"
+        };
+
+        var dynamoConfig = new AmazonDynamoDBConfig
+        {
+            ServiceURL = serviceUrl,
+            AuthenticationRegion = region,
+            Timeout = TimeSpan.FromSeconds(5)
+        };
+        using var dynamoClient = new AmazonDynamoDBClient(accessKey, secretKey, dynamoConfig);
+
+        try
+        {
+            // 1. Try to find the latest MigrationId in DynamoDB
+            try
+            {
+                var scanResponse = await dynamoClient.ScanAsync(new ScanRequest { TableName = tableName });
+                if (scanResponse.Items != null && scanResponse.Items.Count > 0)
+                {
+                    var latestItem = scanResponse.Items
+                        .Select(item => new
+                        {
+                            Id = item.TryGetValue("MigrationId", out var idVal) ? idVal.S : string.Empty,
+                            Time = item.TryGetValue("Timestamp", out var timeVal) ? timeVal.S : string.Empty
+                        })
+                        .Where(x => !string.IsNullOrEmpty(x.Id))
+                        .OrderByDescending(x => x.Time)
+                        .FirstOrDefault();
+
+                    if (latestItem != null)
+                    {
+                        result.MigrationId = latestItem.Id;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result.ErrorMessage = $"Không kết nối được DynamoDB để lấy MigrationId gần nhất: {ex.Message}. Rollback simulation thất bại.";
+                return result;
+            }
+
+            // 2. Write log ROLLBACK_STARTED to DynamoDB
+            result.Status = "ROLLBACK_STARTED";
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "ROLLBACK_STARTED", "Rollback simulation started");
+            AddLocalLog(result, "ROLLBACK_STARTED", "Quy trình Rollback giả lập được bắt đầu.");
+
+            // 3. Write log ROLLBACK_COMPLETED to DynamoDB
+            result.Status = "ROLLBACK_COMPLETED";
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "ROLLBACK_COMPLETED", "Rollback simulation completed successfully. No real cloud data was deleted for demo safety.");
+            AddLocalLog(result, "ROLLBACK_COMPLETED", "Rollback simulation hoàn tất thành công. Không xóa dữ liệu đám mây thật để đảm bảo an toàn demo.");
+
+            result.IsSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = $"Lỗi trong quá trình thực hiện Rollback: {ex.Message}";
+            result.Status = "ROLLBACK_FAILED";
+        }
+
+        return result;
+    }
+
     private async Task LogToDynamoDbAsync(IAmazonDynamoDB client, string tableName, string migrationId, string status, string message)
     {
         try

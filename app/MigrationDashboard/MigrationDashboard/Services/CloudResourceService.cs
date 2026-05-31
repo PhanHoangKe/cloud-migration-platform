@@ -121,11 +121,15 @@ public class CloudResourceService : ICloudResourceService
                     .Take(15)
                     .ToList();
 
-                // Check for SELF_TEST_PASSED log status
+                // Check for SELF_TEST_PASSED or SELF_TEST_TRIGGERED log status for 25 points
+                if (logs.Any(l => l.Status == "SELF_TEST_PASSED" || l.Status == "SELF_TEST_TRIGGERED"))
+                {
+                    healthScore += 25;
+                }
+
                 if (logs.Any(l => l.Status == "SELF_TEST_PASSED"))
                 {
                     hasPassedSelfTest = true;
-                    healthScore += 25;
                     viewModel.LatestSelfTestStatus = "Passed";
                 }
                 else if (logs.Any(l => l.Status == "SELF_TEST_TRIGGERED" || l.Status == "STARTED"))
