@@ -1,6 +1,6 @@
 @model MigrationDashboard.Models.CloudResourceDashboardViewModel
 @{
-    ViewData["Title"] = "Cloud Migration Dashboard";
+    ViewData["Title"] = "Hệ thống chuyển đổi Cloud";
 }
 
 <!-- Section: TempData Alerts -->
@@ -46,10 +46,10 @@
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
                     <div>
-                        <strong>Cảnh báo: LocalStack unavailable!</strong> Cổng kết nối LocalStack <code class="text-dark">http://localhost:4566</code> đang ngoại tuyến. Hệ thống hiển thị trạng thái giả lập (Offline) để demo ổn định.
+                        <strong>Cảnh báo: LocalStack ngoại tuyến!</strong> Cổng kết nối LocalStack <code class="text-dark">http://localhost:4566</code> đang ngoại tuyến. Hệ thống hiển thị trạng thái giả lập (Offline) để đảm bảo chạy demo ổn định.
                     </div>
                 </div>
-                <span class="badge bg-warning text-dark">Simulated Mode</span>
+                <span class="badge bg-warning text-dark">Chế độ giả lập</span>
             </div>
         </div>
     </div>
@@ -59,7 +59,7 @@
 <section id="dashboard" class="mb-4">
     <div class="row g-4">
         <!-- Hero Card -->
-        <div class="col-lg-9 col-md-8">
+        <div class="col-lg-6 col-md-12">
             <div class="hero-card h-100 d-flex flex-column justify-content-between">
                 <div class="hero-content">
                     <span class="badge bg-primary bg-opacity-25 text-primary-light mb-3 px-3 py-2 rounded-pill border border-primary border-opacity-50">
@@ -67,35 +67,89 @@
                     </span>
                     <h2 class="hero-title">Cloud Migration & Modernization Platform</h2>
                     <p class="hero-desc">
-                        Hệ thống mô phỏng quy trình chuyển đổi ứng dụng ASP.NET Core 9 + SQL Server từ môi trường truyền thống (On-premise) lên hạ tầng điện toán đám mây (AWS Cloud) sử dụng LocalStack và công cụ Terraform để cấu hình hạ tầng dạng Code (Infrastructure as Code - IaC).
+                        Mô phỏng quy trình chuyển đổi ứng dụng ASP.NET Core 9 + SQL Server từ môi trường On-premise lên hạ tầng Cloud giả lập bằng LocalStack và Terraform.
                     </p>
                 </div>
                 <div class="tech-badge-container">
                     <span class="tech-badge"><i class="bi bi-braces me-1"></i> ASP.NET Core 9</span>
                     <span class="tech-badge"><i class="bi bi-database me-1"></i> SQL Server</span>
-                    <span class="tech-badge"><i class="bi bi-cloud-check-fill me-1 text-success"></i> LocalStack (AWS)</span>
+                    <span class="tech-badge"><i class="bi bi-cloud-check-fill me-1 text-success"></i> LocalStack</span>
                     <span class="tech-badge"><i class="bi bi-boxes me-1 text-warning"></i> Terraform IaC</span>
                 </div>
             </div>
         </div>
+        <!-- Assessment Summary Card -->
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-card text-center d-flex flex-column align-items-center justify-content-between h-100">
+                <div>
+                    <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2" style="font-size: 12px; letter-spacing: 1px;">ĐÁNH GIÁ NGUỒN</h6>
+                    
+                    <!-- Score Badge -->
+                    <div class="mb-3">
+                        @if (Model.Assessment.ReadinessScore >= 80)
+                        {
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-shield-check me-1"></i> Sẵn sàng</span>
+                        }
+                        else if (Model.Assessment.ReadinessScore >= 50)
+                        {
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-exclamation-triangle me-1"></i> Cần cấu thiện</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-x-circle me-1"></i> Chưa đạt</span>
+                        }
+                    </div>
+
+                    <div class="health-score-container mb-3" style="display: flex; justify-content: center; align-items: center;">
+                        @{
+                            string assessColor = Model.Assessment.ReadinessScore >= 80 ? "#10b981" : (Model.Assessment.ReadinessScore >= 50 ? "#f59e0b" : "#ef4444");
+                            double assessDegrees = Model.Assessment.ReadinessScore * 3.6;
+                        }
+                        <div class="health-circle-outer" style="background: conic-gradient(@assessColor 0deg, @assessColor @(assessDegrees)deg, #e2e8f0 @(assessDegrees)deg); width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
+                            <div class="health-circle-inner" style="background-color: #fff; width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%;">
+                                <span class="health-value text-xl font-bold text-dark" style="font-size: 20px; line-height: 1;">@Model.Assessment.ReadinessScore%</span>
+                                <span class="health-label text-xxs tracking-wider mt-1 text-muted" style="font-size: 8px;">Readiness</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-start px-2 mt-2">
+                        <div class="d-flex justify-content-between mb-1" style="font-size: 11px;">
+                            <span class="text-muted">Dự án nguồn:</span>
+                            <span class="font-semibold text-dark text-truncate ms-2" style="max-width: 100px;" title="@Model.Assessment.ProjectName">@Model.Assessment.ProjectName</span>
+                        </div>
+                        <div class="d-flex justify-content-between" style="font-size: 11px;">
+                            <span class="text-muted">Chiến lược:</span>
+                            <span class="badge bg-indigo bg-opacity-10 text-indigo py-0.5 px-1.5 ms-2" style="font-size: 10px;">@Model.Assessment.RecommendedMigrationStrategy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-100 px-2 mt-3">
+                    <a href="/Assessment" class="btn btn-outline-primary btn-sm w-100" style="border-radius: 8px; font-weight: 600; font-size: 12px; padding: 6px 12px;">
+                        <i class="bi bi-search me-1"></i> Chi tiết đánh giá
+                    </a>
+                </div>
+            </div>
+        </div>
         <!-- Health Score Card -->
-        <div class="col-lg-3 col-md-4">
+        <div class="col-lg-3 col-md-6">
             <div class="dashboard-card text-center d-flex flex-column align-items-center justify-content-center h-100">
-                <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2">Migration Health</h6>
+                <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2" style="font-size: 12px; letter-spacing: 1px;">SỨC KHỎE CHUYỂN ĐỔI</h6>
                 
                 <!-- Status Badge -->
                 <div class="mb-3">
                     @if (Model.MigrationHealthScore >= 75)
                     {
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-shield-check me-1"></i> Healthy</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-shield-check me-1"></i> Ổn định</span>
                     }
                     else if (Model.MigrationHealthScore >= 50)
                     {
-                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-exclamation-triangle me-1"></i> Warning</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-exclamation-triangle me-1"></i> Cảnh báo</span>
                     }
                     else
                     {
-                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-x-octagon me-1"></i> Critical</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-x-octagon me-1"></i> Nguy cấp</span>
                     }
                 </div>
 
@@ -103,11 +157,11 @@
                     @{
                         string healthColor = Model.MigrationHealthScore >= 75 ? "#10b981" : (Model.MigrationHealthScore >= 50 ? "#3b82f6" : "#ef4444");
                         double healthDegrees = Model.MigrationHealthScore * 3.6;
-                        string healthLabel = Model.MigrationHealthScore >= 75 ? "Cloud-Native" : (Model.MigrationHealthScore >= 50 ? "Hybrid" : "On-Premise");
+                        string healthLabel = Model.MigrationHealthScore >= 75 ? "Đám mây" : (Model.MigrationHealthScore >= 50 ? "Môi trường Lai" : "Nội bộ");
                     }
-                    <div class="health-circle-outer" id="healthScoreCircle" style="background: conic-gradient(@healthColor 0deg, @healthColor @(healthDegrees)deg, #334155 @(healthDegrees)deg);">
-                        <div class="health-circle-inner">
-                            <span class="health-value text-xl font-bold" id="healthScoreValue" style="font-size: 26px;">@Model.MigrationHealthScore/100</span>
+                    <div class="health-circle-outer" id="healthScoreCircle" style="background: conic-gradient(@healthColor 0deg, @healthColor @(healthDegrees)deg, #e2e8f0 @(healthDegrees)deg);">
+                        <div class="health-circle-inner" style="background-color: #fff;">
+                            <span class="health-value text-xl font-bold text-dark" id="healthScoreValue" style="font-size: 26px;">@Model.MigrationHealthScore/100</span>
                             <span class="health-label text-xxs tracking-wider mt-1 text-muted" id="healthScoreLabel" style="font-size: 10px;">@healthLabel</span>
                         </div>
                     </div>
@@ -130,7 +184,14 @@
                     }
                     else
                     {
-                        <span>Hạ tầng di trú hoàn tất @Model.MigrationHealthScore%.</span>
+                        if (Model.MigrationHealthScore >= 75)
+                        {
+                            <span>Hạ tầng chuyển đổi hoạt động ổn định.</span>
+                        }
+                        else
+                        {
+                            <span>Tiến trình chuyển đổi hoàn tất (@Model.MigrationHealthScore%).</span>
+                        }
                     }
                 </div>
             </div>
@@ -148,15 +209,15 @@
                     @{
                         string s3IconClass = string.IsNullOrEmpty(Model.S3ErrorMessage) ? "success" : "danger";
                         string s3BadgeClass = string.IsNullOrEmpty(Model.S3ErrorMessage) ? "success" : "danger";
-                        string s3BadgeText = string.IsNullOrEmpty(Model.S3ErrorMessage) ? "Active" : "Error";
-                        string s3ValueText = Model.BackupFilesCount > 0 ? $"{Model.BackupFilesCount} Files" : "0 Files";
+                        string s3BadgeText = string.IsNullOrEmpty(Model.S3ErrorMessage) ? "Hoạt động" : "Lỗi";
+                        string s3ValueText = Model.BackupFilesCount > 0 ? $"{Model.BackupFilesCount} tệp" : "0 tệp";
                     }
                     <div class="stat-icon @s3IconClass" id="statIconS3">
                         <i class="bi bi-folder-symlink"></i>
                     </div>
                     <span class="badge bg-@s3BadgeClass bg-opacity-10 text-@s3BadgeClass" id="badgeS3">@s3BadgeText</span>
                 </div>
-                <h6 class="stat-label">S3 Backup Bucket</h6>
+                <h6 class="stat-label">Backup trên S3</h6>
                 <h4 class="stat-value" id="valS3">@s3ValueText</h4>
             </div>
         </div>
@@ -167,15 +228,15 @@
                     @{
                         string dbIconClass = string.IsNullOrEmpty(Model.DynamoDbErrorMessage) ? "success" : "danger";
                         string dbBadgeClass = string.IsNullOrEmpty(Model.DynamoDbErrorMessage) ? "success" : "danger";
-                        string dbBadgeText = string.IsNullOrEmpty(Model.DynamoDbErrorMessage) ? "Ready" : "Error";
-                        string dbValueText = Model.MigrationLogsCount > 0 ? $"{Model.MigrationLogsCount} Logs" : "0 Logs";
+                        string dbBadgeText = string.IsNullOrEmpty(Model.DynamoDbErrorMessage) ? "Sẵn sàng" : "Lỗi";
+                        string dbValueText = Model.MigrationLogsCount > 0 ? $"{Model.MigrationLogsCount} nhật ký" : "0 nhật ký";
                     }
                     <div class="stat-icon @dbIconClass" id="statIconDynamo">
                         <i class="bi bi-journal-text"></i>
                     </div>
                     <span class="badge bg-@dbBadgeClass bg-opacity-10 text-@dbBadgeClass" id="badgeDynamo">@dbBadgeText</span>
                 </div>
-                <h6 class="stat-label">DynamoDB Logs</h6>
+                <h6 class="stat-label">Nhật ký DynamoDB</h6>
                 <h4 class="stat-value" id="valDynamo">@dbValueText</h4>
             </div>
         </div>
@@ -184,17 +245,21 @@
             <div class="dashboard-card" id="statCardLambda">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     @{
-                        string lambdaIconClass = Model.LatestSelfTestStatus == "Passed" ? "success" : (Model.LatestSelfTestStatus == "Failed" ? "danger" : "secondary");
-                        string lambdaBadgeClass = Model.LatestSelfTestStatus == "Passed" ? "success" : (Model.LatestSelfTestStatus == "Failed" ? "danger" : "secondary");
-                        string lambdaBadgeText = Model.LatestSelfTestStatus;
+                        string lambdaBadgeText = "Chưa chạy";
+                        string lambdaBadgeClass = "secondary";
+                        if (Model.LatestSelfTestStatus == "Passed") { lambdaBadgeText = "Đạt"; lambdaBadgeClass = "success"; }
+                        else if (Model.LatestSelfTestStatus == "Failed") { lambdaBadgeText = "Lỗi"; lambdaBadgeClass = "danger"; }
+                        else if (Model.LatestSelfTestStatus == "Running") { lambdaBadgeText = "Đang chạy"; lambdaBadgeClass = "info"; }
+                        
+                        string lambdaIconClass = lambdaBadgeClass;
                     }
                     <div class="stat-icon @lambdaIconClass" id="statIconLambda">
                         <i class="bi bi-lightning-charge"></i>
                     </div>
                     <span class="badge bg-@lambdaBadgeClass bg-opacity-10 text-@lambdaBadgeClass" id="badgeLambda">@lambdaBadgeText</span>
                 </div>
-                <h6 class="stat-label">Lambda Self-test</h6>
-                <h4 class="stat-value" id="valLambda">@Model.LatestSelfTestStatus</h4>
+                <h6 class="stat-label">Tự kiểm thử Lambda</h6>
+                <h4 class="stat-value" id="valLambda">@lambdaBadgeText</h4>
             </div>
         </div>
         <!-- Card 4: Estimated Cost -->
@@ -204,10 +269,10 @@
                     <div class="stat-icon success" id="statIconCost">
                         <i class="bi bi-cash-stack"></i>
                     </div>
-                    <span class="badge bg-success bg-opacity-10 text-success">Active</span>
+                    <span class="badge bg-success bg-opacity-10 text-success">Hoạt động</span>
                 </div>
-                <h6 class="stat-label">Estimated Cost</h6>
-                <h4 class="stat-value" id="valCost">$@Model.EstimatedMonthlyCost.ToString("F2")/month</h4>
+                <h6 class="stat-label">Chi phí ước tính</h6>
+                <h4 class="stat-value" id="valCost">$@Model.EstimatedMonthlyCost.ToString("F2")/tháng</h4>
             </div>
         </div>
     </div>
@@ -221,17 +286,17 @@
             <div>
                 <div class="card-header-custom">
                     <h5 class="card-title-custom">
-                        <i class="bi bi-play-circle text-primary"></i> Migration Center
+                        <i class="bi bi-play-circle text-primary"></i> Trung tâm chuyển đổi
                     </h5>
                     <div class="d-flex gap-2">
                         <form asp-controller="Migration" asp-action="Start" method="post" id="migrationForm">
                             <button type="submit" class="btn btn-primary btn-start-migration" id="btnStartMigration">
-                                <i class="bi bi-rocket-takeoff me-2"></i> Start Migration
+                                <i class="bi bi-rocket-takeoff me-2"></i> Bắt đầu chuyển đổi
                             </button>
                         </form>
                         <form asp-controller="Migration" asp-action="Rollback" method="post" id="rollbackForm">
                             <button type="submit" class="btn btn-outline-danger" id="btnRollbackMigration" style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;">
-                                <i class="bi bi-arrow-counterclockwise me-2"></i> Rollback Simulation
+                                <i class="bi bi-arrow-counterclockwise me-2"></i> Mô phỏng khôi phục
                             </button>
                         </form>
                     </div>
@@ -286,13 +351,13 @@
             <!-- Terminal Mock Console -->
             <div class="mt-4">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-xs text-muted font-bold text-uppercase"><i class="bi bi-terminal me-1"></i> Deployment Logs</span>
+                    <span class="text-xs text-muted font-bold text-uppercase" style="font-size: 11px;"><i class="bi bi-terminal me-1"></i> Nhật ký triển khai</span>
                     <span class="badge bg-dark text-white border border-secondary border-opacity-25 px-2 py-1">Terraform & LocalStack</span>
                 </div>
                 <div class="console-box" id="migrationConsole">
                     @if (Model.RecentLogs.Any())
                     {
-                        <div class="console-line text-success">[INFO] Connected to LocalStack database logs... displaying recent events:</div>
+                        <div class="console-line text-success">[INFO] Đã kết nối nhật ký LocalStack... hiển thị các sự kiện gần đây:</div>
                         @foreach (var log in Model.RecentLogs.Take(5))
                         {
                             <div class="console-line">
@@ -304,7 +369,7 @@
                     }
                     else
                     {
-                        <div class="console-line text-muted">Ready to run simulation. Click "Start Migration" above to begin...</div>
+                        <div class="console-line text-muted">Sẵn sàng chạy mô phỏng. Bấm "Bắt đầu chuyển đổi" ở trên để khởi động...</div>
                     }
                 </div>
             </div>
@@ -316,7 +381,7 @@
         <div class="dashboard-card h-100">
             <div class="card-header-custom">
                 <h5 class="card-title-custom">
-                    <i class="bi bi-hdd-network text-success"></i> Cloud Resources
+                    <i class="bi bi-hdd-network text-success"></i> Tài nguyên Cloud
                 </h5>
                 <span class="badge bg-success bg-opacity-10 text-success">LocalStack Endpoint</span>
             </div>
@@ -330,14 +395,14 @@
                         </div>
                         <div>
                             <div class="resource-name">S3 Bucket</div>
-                            <div class="resource-type">Backup Storage</div>
+                            <div class="resource-type">Lưu trữ sao lưu</div>
                         </div>
                     </div>
                     <div class="resource-value" data-bs-toggle="tooltip" title="@Model.S3BucketName">@Model.S3BucketName</div>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.S3ErrorMessage))
                 {
-                    <div class="text-danger text-xs px-3 mb-2"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.S3ErrorMessage</div>
+                    <div class="text-danger text-xs px-3 mb-2" style="font-size: 11px;"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.S3ErrorMessage</div>
                 }
                 
                 <!-- Resource 2 -->
@@ -347,15 +412,15 @@
                             <i class="bi bi-database-fill-gear"></i>
                         </div>
                         <div>
-                            <div class="resource-name">DynamoDB Table</div>
-                            <div class="resource-type">Log Database</div>
+                            <div class="resource-name">Bảng DynamoDB</div>
+                            <div class="resource-type">Cơ sở dữ liệu nhật ký</div>
                         </div>
                     </div>
                     <div class="resource-value" data-bs-toggle="tooltip" title="@Model.DynamoDbTableName">@Model.DynamoDbTableName</div>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.DynamoDbErrorMessage))
                 {
-                    <div class="text-danger text-xs px-3 mb-2"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.DynamoDbErrorMessage</div>
+                    <div class="text-danger text-xs px-3 mb-2" style="font-size: 11px;"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.DynamoDbErrorMessage</div>
                 }
                 
                 <!-- Resource 3 -->
@@ -365,15 +430,15 @@
                             <i class="bi bi-cpu-fill"></i>
                         </div>
                         <div>
-                            <div class="resource-name">Lambda Function</div>
-                            <div class="resource-type">Serverless Self-test</div>
+                            <div class="resource-name">Hàm Lambda</div>
+                            <div class="resource-type">Tự kiểm thử Serverless</div>
                         </div>
                     </div>
                     <div class="resource-value" data-bs-toggle="tooltip" title="@Model.LambdaFunctionName">@Model.LambdaFunctionName</div>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.LambdaErrorMessage))
                 {
-                    <div class="text-danger text-xs px-3 mb-2"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.LambdaErrorMessage</div>
+                    <div class="text-danger text-xs px-3 mb-2" style="font-size: 11px;"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.LambdaErrorMessage</div>
                 }
                 
                 <!-- Resource 4 -->
@@ -384,27 +449,27 @@
                         </div>
                         <div>
                             <div class="resource-name">IAM Roles & Policies</div>
-                            <div class="resource-type">Access Management</div>
+                            <div class="resource-type">Quản lý truy cập</div>
                         </div>
                     </div>
-                    <div class="resource-value" data-bs-toggle="tooltip" title="least privilege model">least privilege</div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="least privilege model">Quyền hạn tối thiểu</div>
                 </div>
             </div>
 
             <!-- Additional Detail/LocalStack Port Info -->
             <div class="mt-4 p-3 bg-light rounded-3 border border-dashed border-secondary border-opacity-25">
-                <h6 class="text-xs text-muted font-bold text-uppercase mb-2"><i class="bi bi-info-circle me-1 text-primary"></i> LocalStack Local Mappings</h6>
+                <h6 class="text-xs text-muted font-bold text-uppercase mb-2" style="font-size: 11px;"><i class="bi bi-info-circle me-1 text-primary"></i> Ánh xạ LocalStack cục bộ</h6>
                 <div class="d-flex justify-content-between text-xs mb-1">
                     <span class="text-muted">Edge Port:</span>
                     <span class="font-monospace text-dark font-semibold">localhost:4566</span>
                 </div>
                 <div class="d-flex justify-content-between text-xs mb-1">
-                    <span class="text-muted">Terraform State:</span>
+                    <span class="text-muted">Trạng thái Terraform:</span>
                     <span class="font-monospace text-success font-semibold">localstack.tfstate</span>
                 </div>
                 <div class="d-flex justify-content-between text-xs">
-                    <span class="text-muted">SQL Database:</span>
-                    <span class="font-monospace text-primary font-semibold">On-Prem (Port 1433)</span>
+                    <span class="text-muted">Cơ sở dữ liệu SQL:</span>
+                    <span class="font-monospace text-primary font-semibold">On-Prem (Cổng 1433)</span>
                 </div>
             </div>
         </div>
@@ -418,26 +483,28 @@
         <div class="dashboard-card">
             <div class="card-header-custom border-bottom pb-2">
                 <h5 class="card-title-custom text-warning">
-                    <i class="bi bi-file-earmark-zip-fill"></i> Recent S3 Backups
+                    <i class="bi bi-file-earmark-zip-fill"></i> Backup gần đây trên S3
                 </h5>
-                <span class="badge bg-warning bg-opacity-10 text-warning">@Model.BackupFilesCount Total</span>
+                <span class="badge bg-warning bg-opacity-10 text-warning">@Model.BackupFilesCount tệp</span>
             </div>
             <div class="table-responsive mt-3" style="max-height: 280px; overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0 text-sm">
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th>Object Key</th>
-                            <th>Size</th>
-                            <th>Last Modified</th>
+                            <th>Tên đối tượng (Key)</th>
+                            <th>Dung lượng</th>
+                            <th>Thời gian</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (Model.RecentBackups.Any())
                         {
-                            @foreach (var backup in Model.RecentBackups)
+                            @foreach (var backup in Model.RecentBackups.Take(5))
                             {
                                 <tr>
-                                    <td class="font-monospace text-xs text-dark font-semibold">@backup.Key</td>
+                                    <td class="font-monospace text-xs text-dark font-semibold">
+                                        <div class="text-truncate" style="max-width: 220px;" title="@backup.Key">@backup.Key</div>
+                                    </td>
                                     <td>@((backup.Size / 1024.0).ToString("F1")) KB</td>
                                     <td class="text-muted text-xs">@backup.LastModified.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                 </tr>
@@ -448,7 +515,7 @@
                             <tr>
                                 <td colspan="3" class="text-center text-muted py-4">
                                     <i class="bi bi-folder2-open d-block fs-3 mb-2 text-secondary"></i>
-                                    No backup files found in S3 bucket.
+                                    Không tìm thấy tệp sao lưu nào trong S3 bucket.
                                 </td>
                             </tr>
                         }
@@ -463,35 +530,45 @@
         <div class="dashboard-card">
             <div class="card-header-custom border-bottom pb-2">
                 <h5 class="card-title-custom text-primary">
-                    <i class="bi bi-database-fill"></i> Recent Migration Logs
+                    <i class="bi bi-database-fill"></i> Nhật ký chuyển đổi gần đây
                 </h5>
-                <span class="badge bg-primary bg-opacity-10 text-primary">@Model.MigrationLogsCount Total</span>
+                <span class="badge bg-primary bg-opacity-10 text-primary">@Model.MigrationLogsCount nhật ký</span>
             </div>
             <div class="table-responsive mt-3" style="max-height: 280px; overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0 text-sm">
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th>MigrationId</th>
-                            <th>Status</th>
-                            <th>Message</th>
-                            <th>Timestamp</th>
+                            <th>Mã chuyển đổi</th>
+                            <th>Trạng thái</th>
+                            <th>Thông báo</th>
+                            <th>Thời gian</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (Model.RecentLogs.Any())
                         {
-                            @foreach (var log in Model.RecentLogs)
+                            @foreach (var log in Model.RecentLogs.Take(5))
                             {
                                 <tr>
-                                    <td class="font-monospace text-xs text-primary font-semibold">@log.MigrationId</td>
+                                    <td class="font-monospace text-xs text-primary font-semibold">
+                                        <div class="text-truncate" style="max-width: 110px;" title="@log.MigrationId">@log.MigrationId</div>
+                                    </td>
                                     <td>
                                         @{
-                                            string badgeColor = log.Status == "COMPLETED" || log.Status == "SELF_TEST_PASSED" ? "success" :
-                                                                (log.Status == "STARTED" || log.Status == "SELF_TEST_TRIGGERED" ? "info" : "danger");
+                                            string statusText = log.Status;
+                                            string badgeColor = "secondary";
+                                            if (log.Status == "SELF_TEST_PASSED") { statusText = "Tự kiểm thử đạt"; badgeColor = "success"; }
+                                            else if (log.Status == "ROLLBACK_COMPLETED") { statusText = "Khôi phục hoàn tất"; badgeColor = "info"; }
+                                            else if (log.Status == "UPLOADED_TO_S3") { statusText = "Đã tải lên S3"; badgeColor = "primary"; }
+                                            else if (log.Status == "BACKUP_CREATED") { statusText = "Đã tạo backup"; badgeColor = "warning text-dark"; }
+                                            else if (log.Status == "STARTED") { statusText = "Đã bắt đầu"; badgeColor = "secondary"; }
+                                            else if (log.Status == "FAILED") { statusText = "Lỗi"; badgeColor = "danger"; }
+                                            else if (log.Status == "ROLLBACK_STARTED") { statusText = "Bắt đầu khôi phục"; badgeColor = "warning text-dark"; }
+                                            else if (log.Status == "SELF_TEST_TRIGGERED") { statusText = "Đang tự kiểm thử"; badgeColor = "info"; }
                                         }
-                                        <span class="badge bg-@badgeColor bg-opacity-10 text-@badgeColor text-xs">@log.Status</span>
+                                        <span class="badge bg-@badgeColor bg-opacity-10 text-@badgeColor text-xs">@statusText</span>
                                     </td>
-                                    <td class="text-xs text-dark" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@log.Message">
+                                    <td class="text-xs text-dark" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@log.Message">
                                         @log.Message
                                     </td>
                                     <td class="text-muted text-xs">@log.Timestamp</td>
@@ -503,7 +580,7 @@
                             <tr>
                                 <td colspan="4" class="text-center text-muted py-4">
                                     <i class="bi bi-journal-x d-block fs-3 mb-2 text-secondary"></i>
-                                    No migration logs found in DynamoDB.
+                                    Không tìm thấy nhật ký chuyển đổi nào trong DynamoDB.
                                 </td>
                             </tr>
                         }
@@ -522,12 +599,12 @@
             <div>
                 <div class="card-header-custom">
                     <h5 class="card-title-custom">
-                        <i class="bi bi-currency-dollar text-warning"></i> Cost Estimation
+                        <i class="bi bi-currency-dollar text-warning"></i> Ước tính chi phí
                     </h5>
-                    <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$@Model.EstimatedMonthlyCost.ToString("F2") / Month</span>
+                    <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$@Model.EstimatedMonthlyCost.ToString("F2") / tháng</span>
                 </div>
                 
-                <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3">
+                <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3" style="height: 260px;">
                     <canvas id="costChart"></canvas>
                 </div>
 
@@ -536,7 +613,7 @@
                         <thead>
                             <tr class="border-bottom text-muted">
                                 <th>Dịch vụ</th>
-                                <th class="text-end">Chi phí / Tháng</th>
+                                <th class="text-end">Chi phí / tháng</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -544,10 +621,10 @@
                             {
                                 <tr>
                                     <td>
-                                        <div class="font-bold text-dark">@cost.ServiceName</div>
+                                        <div class="font-bold text-dark text-sm">@cost.ServiceName</div>
                                         <div class="text-muted text-xxs" style="font-size: 10px;">@cost.Description</div>
                                     </td>
-                                    <td class="text-end font-monospace font-semibold text-dark">
+                                    <td class="text-end font-monospace font-semibold text-dark text-sm">
                                         $@cost.CostPerMonth.ToString("F2")
                                     </td>
                                 </tr>
@@ -569,66 +646,89 @@
         <div class="dashboard-card h-100">
             <div class="card-header-custom">
                 <h5 class="card-title-custom">
-                    <i class="bi bi-diagram-3 text-info"></i> Architecture Overview
+                    <i class="bi bi-diagram-3 text-info"></i> Kiến trúc hệ thống
                 </h5>
-                <span class="badge bg-info bg-opacity-10 text-info">Hybrid Flow</span>
+                <span class="badge bg-info bg-opacity-10 text-info">Sơ đồ luồng</span>
             </div>
             
             <div class="architecture-flow mt-3">
-                <!-- User / Lecturer Node -->
-                <div class="arch-node">
-                    <div class="arch-node-title text-primary">
-                        <i class="bi bi-person-workspace"></i> User / Lecturer (Client)
+                <!-- 1. Client Node -->
+                <div class="arch-node-flat">
+                    <div class="arch-icon-wrapper text-primary"><i class="bi bi-person-workspace"></i></div>
+                    <div class="arch-text-wrapper">
+                        <div class="arch-node-title">1. Người dùng / Giảng viên</div>
+                        <div class="arch-node-desc">Gửi yêu cầu và theo dõi tiến trình di trú qua trình duyệt</div>
                     </div>
-                    <div class="arch-node-desc">Gửi yêu cầu truy cập & kích hoạt di trú dữ liệu</div>
                 </div>
-
-                <div class="arch-arrow">
-                    <i class="bi bi-arrow-down-short"></i>
-                </div>
-
-                <!-- Web Application Dashboard Node -->
-                <div class="arch-node">
-                    <div class="arch-node-title text-indigo" style="color: #6366f1;">
-                        <i class="bi bi-file-code-fill"></i> ASP.NET Core 9 Dashboard
+                
+                <div class="arch-arrow-down"><i class="bi bi-arrow-down-short"></i></div>
+                
+                <!-- 2. Dashboard Node -->
+                <div class="arch-node-flat">
+                    <div class="arch-icon-wrapper text-indigo"><i class="bi bi-window-sidebar"></i></div>
+                    <div class="arch-text-wrapper">
+                        <div class="arch-node-title">2. Migration Dashboard ASP.NET Core 9</div>
+                        <div class="arch-node-desc">Quản lý logic di trú, tương tác API và kết xuất dữ liệu</div>
                     </div>
-                    <div class="arch-node-desc">Dashboard giao diện và Client kết nối LocalStack API</div>
+                </div>
+                
+                <div class="arch-arrow-down"><i class="bi bi-arrow-down-short"></i></div>
+
+                <!-- 3. Service Node -->
+                <div class="arch-node-flat">
+                    <div class="arch-icon-wrapper text-info"><i class="bi bi-gear-wide-connected"></i></div>
+                    <div class="arch-text-wrapper">
+                        <div class="arch-node-title">3. Dịch vụ chuyển đổi</div>
+                        <div class="arch-node-desc">Đọc dữ liệu SQL Server và điều phối các tác vụ cloud</div>
+                    </div>
+                </div>
+                
+                <div class="arch-arrow-down"><i class="bi bi-arrow-down-short"></i></div>
+
+                <!-- Cloud resources container -->
+                <div class="arch-cloud-box w-100 p-3 rounded-4 border border-dashed border-indigo-subtle">
+                    <div class="text-uppercase text-xs text-muted font-bold mb-3 text-center" style="font-size: 11px;"><i class="bi bi-cloud-fill text-primary"></i> Hạ tầng LocalStack (Giả lập AWS)</div>
+                    <div class="d-flex flex-column gap-2">
+                        <!-- 4. S3 Backup -->
+                        <div class="arch-sub-node">
+                            <i class="bi bi-archive-fill text-warning"></i>
+                            <div>
+                                <strong class="text-sm">4. S3 Backup</strong>
+                                <span class="text-xxs text-muted d-block" style="font-size: 10px;">Lưu trữ tệp sao lưu dữ liệu (.json)</span>
+                            </div>
+                        </div>
+                        <!-- 5. DynamoDB Logs -->
+                        <div class="arch-sub-node">
+                            <i class="bi bi-database-fill-gear text-primary"></i>
+                            <div>
+                                <strong class="text-sm">5. DynamoDB Logs</strong>
+                                <span class="text-xxs text-muted d-block" style="font-size: 10px;">Nhật ký và dấu vết trạng thái chuyển đổi</span>
+                            </div>
+                        </div>
+                        <!-- 6. Lambda Self-test -->
+                        <div class="arch-sub-node">
+                            <i class="bi bi-cpu-fill text-danger"></i>
+                            <div>
+                                <strong class="text-sm">6. Lambda Self-test</strong>
+                                <span class="text-xxs text-muted d-block" style="font-size: 10px;">Serverless kiểm tra kết nối sau di trú</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="arch-arrow">
-                    <i class="bi bi-arrow-down-short"></i>
-                </div>
+                <div class="arch-arrow-down"><i class="bi bi-arrow-down-short"></i></div>
 
-                <!-- AWS Cloud Group -->
-                <div class="arch-cloud-group">
-                    <span class="arch-cloud-tag"><i class="bi bi-cloud-fill me-1"></i> AWS Cloud (LocalStack)</span>
-                    <div class="arch-cloud-nodes">
-                        <!-- Node Cloud S3 -->
-                        <div class="arch-node">
-                            <div class="arch-node-title text-warning">
-                                <i class="bi bi-archive-fill"></i> Amazon S3
-                            </div>
-                            <div class="arch-node-desc">Lưu trữ SQL Server Backup (.bak)</div>
-                        </div>
-                        
-                        <!-- Node Cloud DynamoDB -->
-                        <div class="arch-node">
-                            <div class="arch-node-title text-primary">
-                                <i class="bi bi-database-fill-gear"></i> DynamoDB Logs
-                            </div>
-                            <div class="arch-node-desc">Ghi nhật ký tiến trình chuyển đổi</div>
-                        </div>
-
-                        <!-- Node Cloud Lambda -->
-                        <div class="arch-node col-span-2 w-100" style="grid-column: span 2;">
-                            <div class="arch-node-title text-danger">
-                                <i class="bi bi-cpu-fill"></i> Lambda Self-test Function
-                            </div>
-                            <div class="arch-node-desc">Tự động kiểm tra liên thông hạ tầng sau di trú</div>
-                        </div>
+                <!-- 7. Terraform IaC + LocalStack -->
+                <div class="arch-node-flat">
+                    <div class="arch-icon-wrapper text-success"><i class="bi bi-boxes"></i></div>
+                    <div class="arch-text-wrapper">
+                        <div class="arch-node-title">7. Terraform IaC + LocalStack</div>
+                        <div class="arch-node-desc">Quản lý vòng đời và tự động hóa toàn bộ tài nguyên đám mây</div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 </div>
 
 <!-- Section: Before/After Comparison -->
@@ -638,9 +738,9 @@
             <div class="dashboard-card">
                 <div class="card-header-custom border-bottom pb-2">
                     <h5 class="card-title-custom text-indigo">
-                        <i class="bi bi-arrow-left-right text-indigo me-2"></i> Before / After Comparison
+                        <i class="bi bi-arrow-left-right text-indigo me-2"></i> So sánh trước và sau chuyển đổi
                     </h5>
-                    <span class="badge bg-indigo bg-opacity-10 text-indigo">On-Premise vs. Cloud-Native</span>
+                    <span class="badge bg-indigo bg-opacity-10 text-indigo">On-Premise vs. Cloud</span>
                 </div>
                 
                 <div class="table-responsive mt-3">
@@ -649,7 +749,7 @@
                             <tr class="text-uppercase text-xs text-muted tracking-wider border-bottom">
                                 <th class="pb-3" style="width: 20%;">Tiêu chí</th>
                                 <th class="pb-3" style="width: 40%;">Môi trường On-Premise</th>
-                                <th class="pb-3" style="width: 40%;">Môi trường Cloud (Simulation)</th>
+                                <th class="pb-3" style="width: 40%;">Môi trường Cloud mô phỏng</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -665,13 +765,15 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="p-3 rounded-3 text-sm text-secondary bg-danger bg-opacity-5 border border-danger border-opacity-10">
-                                            @item.OnPremiseDetails
+                                        <div class="p-3 rounded-3 text-sm text-secondary bg-light border border-secondary border-opacity-10">
+                                            <span class="badge bg-danger bg-opacity-10 text-danger mb-2">On-Premise</span>
+                                            <p class="mb-0">@item.OnPremiseDetails</p>
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="p-3 rounded-3 text-sm text-dark bg-success bg-opacity-5 border border-success border-opacity-10 font-semibold">
-                                            @item.CloudDetails
+                                        <div class="p-3 rounded-3 text-sm text-dark bg-light border border-indigo border-opacity-15 font-semibold">
+                                            <span class="badge bg-success bg-opacity-10 text-success mb-2">AWS Cloud</span>
+                                            <p class="mb-0">@item.CloudDetails</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -695,9 +797,9 @@
             const dbCost = @(Model.MigrationLogsCount > 0 ? 0.10 : 0.0);
             const lambdaCost = @(Model.LatestSelfTestStatus == "Passed" ? 0.05 : 0.0);
             const otherCost = @(Model.EstimatedMonthlyCost > 0 ? 0.07 : 0.0);
-
+ 
             const costData = {
-                labels: ['S3 Storage', 'DynamoDB', 'Lambda', 'Other'],
+                labels: ['Lưu trữ S3', 'DynamoDB', 'Hàm Lambda', 'Khác'],
                 datasets: [{
                     data: [s3Cost, dbCost, lambdaCost, otherCost],
                     backgroundColor: [
@@ -732,7 +834,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return ` ${context.label}: $${context.raw.toFixed(2)} USD`;
+                                    return ` ${context.label}: $${context.raw.toFixed(2)} USD/tháng`;
                                 }
                             }
                         }
@@ -775,7 +877,7 @@
             if (migrationForm) {
                 migrationForm.addEventListener("submit", function (e) {
                     btnStart.disabled = true;
-                    btnStart.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i> Migrating...`;
+                    btnStart.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block text-white"></i> Đang chuyển đổi...`;
                     btnStart.classList.remove("btn-primary");
                     btnStart.classList.add("btn-warning");
                     
@@ -783,10 +885,10 @@
                     progressBar.style.width = "45%";
                     
                     consoleBox.innerHTML = "";
-                    logToConsole("Initializing connection to LocalStack endpoints...", "info");
-                    logToConsole("Reading credential configurations...", "info");
-                    logToConsole("Provisioning cloud backup resources...", "tf");
-                    logToConsole("Uploading local application SQL database backups...", "info");
+                    logToConsole("Đang khởi tạo kết nối đến LocalStack endpoints...", "info");
+                    logToConsole("Đang cấu hình thông tin xác thực giả lập...", "info");
+                    logToConsole("Đang thiết lập tài nguyên đám mây (S3/DynamoDB)...", "tf");
+                    logToConsole("Đang kết xuất và tải lên bản sao lưu cơ sở dữ liệu...", "info");
                 });
             }
 
@@ -795,7 +897,7 @@
             if (rollbackForm && btnRollback) {
                 rollbackForm.addEventListener("submit", function (e) {
                     btnRollback.disabled = true;
-                    btnRollback.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i> Rolling back...`;
+                    btnRollback.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i> Đang khôi phục...`;
                     btnRollback.classList.remove("btn-outline-danger");
                     btnRollback.classList.add("btn-danger");
                 });

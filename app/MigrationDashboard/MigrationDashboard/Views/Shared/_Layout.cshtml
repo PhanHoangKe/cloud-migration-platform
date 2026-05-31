@@ -40,33 +40,45 @@
             <nav class="sidebar-nav">
                 <ul class="nav-list">
                     <li class="nav-item-custom">
-                        <a href="#dashboard" class="nav-link-custom active">
+                        <a href="/#dashboard" class="nav-link-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
                             <i class="bi bi-speedometer2"></i>
-                            <span>Dashboard</span>
+                            <span>Tổng quan</span>
                         </a>
                     </li>
                     <li class="nav-item-custom">
-                        <a href="#migration-center" class="nav-link-custom">
+                        <a href="/Assessment" class="nav-link-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "Assessment" ? "active" : "")">
+                            <i class="bi bi-clipboard2-check"></i>
+                            <span>Đánh giá nguồn</span>
+                        </a>
+                    </li>
+                    <li class="nav-item-custom">
+                        <a href="/#migration-center" class="nav-link-custom">
                             <i class="bi bi-play-circle"></i>
-                            <span>Migration Center</span>
+                            <span>Trung tâm chuyển đổi</span>
                         </a>
                     </li>
                     <li class="nav-item-custom">
-                        <a href="#cloud-resources" class="nav-link-custom">
+                        <a href="/#cloud-resources" class="nav-link-custom">
                             <i class="bi bi-hdd-network"></i>
-                            <span>Cloud Resources</span>
+                            <span>Tài nguyên Cloud</span>
                         </a>
                     </li>
                     <li class="nav-item-custom">
-                        <a href="#cost-estimation" class="nav-link-custom">
+                        <a href="/#cost-estimation" class="nav-link-custom">
                             <i class="bi bi-currency-dollar"></i>
-                            <span>Cost Estimation</span>
+                            <span>Ước tính chi phí</span>
                         </a>
                     </li>
                     <li class="nav-item-custom">
-                        <a href="#architecture" class="nav-link-custom">
+                        <a href="/#architecture" class="nav-link-custom">
                             <i class="bi bi-diagram-3"></i>
-                            <span>Architecture</span>
+                            <span>Kiến trúc hệ thống</span>
+                        </a>
+                    </li>
+                    <li class="nav-item-custom">
+                        <a href="/#comparison" class="nav-link-custom">
+                            <i class="bi bi-arrow-left-right"></i>
+                            <span>So sánh trước/sau</span>
                         </a>
                     </li>
                 </ul>
@@ -75,7 +87,7 @@
             <div class="sidebar-footer">
                 <div class="status-indicator">
                     <span class="status-dot online" id="localstackStatusDot"></span>
-                    <span class="status-text" id="localstackStatusText">LocalStack: Running</span>
+                    <span class="status-text" id="localstackStatusText">LocalStack: Đang chạy</span>
                 </div>
             </div>
         </aside>
@@ -95,11 +107,11 @@
                     <div class="topbar-actions d-flex align-items-center gap-3">
                         <div class="badge-env shadow-sm">
                             <i class="bi bi-shield-check text-success"></i>
-                            <span>Environment: LocalStack</span>
+                            <span>Môi trường: LocalStack</span>
                         </div>
                         <div class="user-profile">
                             <div class="avatar">DT</div>
-                            <span class="username d-none d-lg-inline">Cloud Demo / Academic</span>
+                            <span class="username d-none d-lg-inline">Mô phỏng học thuật</span>
                         </div>
                     </div>
                 </div>
@@ -113,7 +125,7 @@
             <!-- Footer -->
             <footer class="main-footer border-top bg-white py-3">
                 <div class="container-fluid text-center text-muted">
-                    <small>&copy; 2026 - Cloud Migration Simulation Platform - Đồ án Điện toán đám mây</small>
+                    <small>&copy; 2026 - Hệ thống mô phỏng chuyển đổi ứng dụng - Đồ án Điện toán đám mây</small>
                 </div>
             </footer>
         </div>

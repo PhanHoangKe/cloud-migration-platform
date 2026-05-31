@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IMigrationService, MigrationService>();
 builder.Services.AddScoped<ICloudResourceService, CloudResourceService>();
+builder.Services.AddScoped<IPreMigrationAssessmentService, PreMigrationAssessmentService>();
 
 var app = builder.Build();
 

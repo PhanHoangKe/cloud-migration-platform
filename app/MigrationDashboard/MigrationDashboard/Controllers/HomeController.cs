@@ -10,16 +10,20 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly ICloudResourceService _cloudResourceService;
+    private readonly IPreMigrationAssessmentService _assessmentService;
+    private const string OnPremPath = @"D:\cloud-migration-platform\app\OnPremApp\EduFlex - ĐTĐM";
 
-    public HomeController(ILogger<HomeController> logger, ICloudResourceService cloudResourceService)
+    public HomeController(ILogger<HomeController> logger, ICloudResourceService cloudResourceService, IPreMigrationAssessmentService assessmentService)
     {
         _logger = logger;
         _cloudResourceService = cloudResourceService;
+        _assessmentService = assessmentService;
     }
 
     public async Task<IActionResult> Index()
     {
         var dashboardData = await _cloudResourceService.GetDashboardDataAsync();
+        dashboardData.Assessment = _assessmentService.RunAssessment(OnPremPath);
         return View(dashboardData);
     }
 

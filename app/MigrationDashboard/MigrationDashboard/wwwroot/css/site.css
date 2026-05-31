@@ -2,7 +2,7 @@
 :root {
   --primary-color: #4f46e5;
   --primary-hover: #4338ca;
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
   --secondary-color: #64748b;
   
   --success-color: #10b981;
@@ -142,7 +142,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   color: #94a3b8;
   text-decoration: none;
   border-radius: 10px;
@@ -156,15 +156,33 @@ html, body {
   color: #fff;
 }
 
+.nav-link-custom:hover i {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
 .nav-link-custom.active {
   background: var(--primary-gradient);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+}
+
+.nav-link-custom.active i {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .nav-link-custom i {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  font-size: 16px;
+  transition: var(--transition-smooth);
 }
 
 .sidebar-footer {
@@ -688,44 +706,58 @@ html, body {
   margin-top: 15px;
 }
 
-/* Architecture Flowchart Diagram (HTML/CSS) */
+/* Architecture Flowchart Diagram (HTML/CSS) - Compact style */
 .architecture-flow {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  padding: 20px 10px;
+  gap: 8px;
+  padding: 10px 0;
   position: relative;
 }
 
-.arch-node {
+.arch-node-flat {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   background-color: #fff;
   border: 1px solid var(--card-border);
   border-radius: 12px;
-  padding: 14px 20px;
+  padding: 12px 16px;
   width: 100%;
-  max-width: 320px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
   transition: var(--transition-smooth);
-  z-index: 5;
 }
 
-.arch-node:hover {
+.arch-node-flat:hover {
   transform: translateY(-2px);
   border-color: var(--primary-color);
-  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
 }
 
-.arch-node-title {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 4px;
-  color: #1e293b;
+.arch-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.arch-text-wrapper {
+  flex: 1;
+  text-align: left;
+}
+
+.arch-text-wrapper .arch-node-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 2px 0;
+  color: #1e293b;
+  display: block;
 }
 
 .arch-node-desc {
@@ -734,59 +766,42 @@ html, body {
   margin: 0;
 }
 
-.arch-arrow {
+.arch-arrow-down {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--primary-color);
+  margin: 2px 0;
+  font-size: 22px;
   animation: bounceSlow 2s infinite;
-  height: 30px;
 }
 
-.arch-arrow i {
-  font-size: 20px;
+.arch-cloud-box {
+  border: 1.5px dashed rgba(99, 102, 241, 0.25);
+  background-color: rgba(99, 102, 241, 0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.arch-cloud-group {
-  border: 2px dashed rgba(99, 102, 241, 0.25);
-  border-radius: 16px;
-  padding: 20px;
-  background-color: rgba(99, 102, 241, 0.02);
-  width: 100%;
-  max-width: 480px;
-  position: relative;
+.arch-sub-node {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-align: left;
 }
 
-.arch-cloud-tag {
-  position: absolute;
-  top: -12px;
-  left: 20px;
-  background: var(--primary-gradient);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.arch-sub-node i {
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
-.arch-cloud-nodes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-top: 10px;
-}
-
-@media(max-width: 480px) {
-  .arch-cloud-nodes {
-    grid-template-columns: 1fr;
-  }
-}
-
-.arch-cloud-nodes .arch-node {
-  max-width: 100%;
+.arch-sub-node strong {
+  color: #334155;
 }
 
 /* Animations */

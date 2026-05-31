@@ -173,12 +173,12 @@ public class CloudResourceService : ICloudResourceService
         // Populate before/after comparison list
         viewModel.ComparisonItems = new List<ComparisonItemViewModel>
         {
-            new() { Category = "Hạ tầng", OnPremiseDetails = "Cấu hình thủ công trên máy local/server vật lý", CloudDetails = "Hạ tầng được mô tả bằng Terraform, có thể apply/destroy tự động", Icon = "bi-boxes" },
-            new() { Category = "Lưu trữ file", OnPremiseDetails = "Lưu trên ổ đĩa máy chủ", CloudDetails = "Lưu trên S3 object storage", Icon = "bi-archive" },
-            new() { Category = "Ghi log", OnPremiseDetails = "Log local hoặc SQL Server", CloudDetails = "Migration logs lưu trên DynamoDB", Icon = "bi-journal-text" },
-            new() { Category = "Kiểm thử sau triển khai", OnPremiseDetails = "Kiểm tra thủ công", CloudDetails = "Lambda self-test tự động kiểm tra S3/DynamoDB", Icon = "bi-lightning-charge" },
-            new() { Category = "Khả năng phục hồi", OnPremiseDetails = "Khó rollback, phụ thuộc backup thủ công", CloudDetails = "Có backup object, log trạng thái và rollback simulation", Icon = "bi-arrow-counterclockwise" },
-            new() { Category = "Chi phí", OnPremiseDetails = "Khó ước tính chi tiết theo dịch vụ", CloudDetails = "Có bảng cost estimation theo từng thành phần", Icon = "bi-cash-stack" }
+            new() { Category = "Hạ tầng", OnPremiseDetails = "Cấu hình thủ công trên máy local/server vật lý", CloudDetails = "Hạ tầng mô tả bằng Terraform, có thể apply/destroy tự động", Icon = "bi-boxes" },
+            new() { Category = "Lưu trữ file", OnPremiseDetails = "Lưu trên ổ đĩa máy chủ", CloudDetails = "Lưu trên S3 Object Storage", Icon = "bi-archive" },
+            new() { Category = "Nhật ký hệ thống", OnPremiseDetails = "Log local hoặc SQL Server", CloudDetails = "Migration logs lưu trên DynamoDB", Icon = "bi-journal-text" },
+            new() { Category = "Kiểm thử sau triển khai", OnPremiseDetails = "Kiểm tra thủ công", CloudDetails = "Lambda Self-test kiểm tra S3 và DynamoDB", Icon = "bi-lightning-charge" },
+            new() { Category = "Khả năng khôi phục", OnPremiseDetails = "Phụ thuộc backup thủ công", CloudDetails = "Có backup object, log trạng thái và rollback simulation", Icon = "bi-arrow-counterclockwise" },
+            new() { Category = "Chi phí", OnPremiseDetails = "Khó ước tính chi tiết theo từng dịch vụ", CloudDetails = "Có bảng ước tính chi phí theo từng thành phần", Icon = "bi-cash-stack" }
         };
 
         viewModel.MigrationHealthScore = healthScore;

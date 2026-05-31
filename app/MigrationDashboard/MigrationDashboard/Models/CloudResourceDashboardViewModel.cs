@@ -23,4 +23,5 @@ public class CloudResourceDashboardViewModel
     public List<MigrationLogItem> RecentLogs { get; set; } = new();
     public List<CostItemViewModel> CostItems { get; set; } = new();
     public List<ComparisonItemViewModel> ComparisonItems { get; set; } = new();
+    public PreMigrationAssessmentViewModel Assessment { get; set; } = new();
 }
