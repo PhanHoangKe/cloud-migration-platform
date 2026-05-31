@@ -35,3 +35,7 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Private real on-premise application - do not commit
+app/OnPremApp/EduFlex - ĐTĐM/
+app/OnPremApp/EduFlex/
