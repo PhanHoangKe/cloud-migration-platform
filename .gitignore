@@ -45,3 +45,6 @@ app/MigrationDashboard/MigrationDashboard/wwwroot/migration-packages/
 app/MigrationDashboard/MigrationDashboard/wwwroot/restore-simulations/
 app/MigrationDashboard/MigrationDashboard/wwwroot/migration-backups/
 app/MigrationDashboard/MigrationDashboard/wwwroot/temp/
+
+# Local private settings
+app/MigrationDashboard/MigrationDashboard/appsettings.Local.json
