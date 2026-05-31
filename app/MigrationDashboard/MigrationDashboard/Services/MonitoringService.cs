@@ -163,6 +163,10 @@ public class MonitoringService : IMonitoringService
             "ASSESSMENT_EXPORTED" => "Đã xuất đánh giá",
             "MANIFEST_CREATED" => "Đã tạo manifest",
             "SOURCE_PACKAGED" => "Đã đóng gói source",
+            "DATABASE_CONNECTED" => "Đã kết nối CSDL",
+            "DATABASE_EXPORTED" => "Đã xuất CSDL",
+            "DATABASE_EXPORT_UPLOADED_TO_S3" => "Đã tải xuất CSDL lên S3",
+            "DATABASE_EXPORT_FAILED" => "Lỗi xuất CSDL",
             "UPLOADED_TO_S3" => "Đã tải lên S3",
             "SELF_TEST_TRIGGERED" => "Đã gọi tự kiểm thử",
             "SELF_TEST_PASSED" => "Tự kiểm thử đạt",
@@ -186,16 +190,16 @@ public class MonitoringService : IMonitoringService
     {
         return status switch
         {
-            "SELF_TEST_PASSED" or "RESTORE_COMPLETED" or "ROLLBACK_COMPLETED" or "REPORT_UPLOADED_TO_S3" or "UPLOADED_TO_S3" 
+            "SELF_TEST_PASSED" or "RESTORE_COMPLETED" or "ROLLBACK_COMPLETED" or "REPORT_UPLOADED_TO_S3" or "UPLOADED_TO_S3" or "DATABASE_EXPORT_UPLOADED_TO_S3"
                 => ("success", "bi-check-circle-fill text-success"),
 
             "SELF_TEST_TRIGGERED" or "RESTORE_PACKAGE_VALIDATED" or "STARTED" or "RESTORE_STARTED" or "ROLLBACK_STARTED"
                 => ("warning text-dark", "bi-play-circle-fill text-warning"),
 
-            "FAILED" or "SELF_TEST_FAILED" or "RESTORE_FAILED" or "ROLLBACK_FAILED"
+            "FAILED" or "SELF_TEST_FAILED" or "RESTORE_FAILED" or "ROLLBACK_FAILED" or "DATABASE_EXPORT_FAILED"
                 => ("danger", "bi-x-circle-fill text-danger"),
 
-            "REPORT_GENERATED" or "ASSESSMENT_EXPORTED" or "MANIFEST_CREATED" or "SOURCE_PACKAGED" or "RESTORE_FILES_DOWNLOADED"
+            "REPORT_GENERATED" or "ASSESSMENT_EXPORTED" or "MANIFEST_CREATED" or "SOURCE_PACKAGED" or "RESTORE_FILES_DOWNLOADED" or "DATABASE_CONNECTED" or "DATABASE_EXPORTED"
                 => ("info", "bi-info-circle-fill text-info"),
 
             _ => ("secondary", "bi-arrow-right-circle text-secondary")
@@ -206,6 +210,7 @@ public class MonitoringService : IMonitoringService
     {
         if (status.StartsWith("RESTORE_")) return "RESTORE_SIMULATION";
         if (status.StartsWith("ROLLBACK_")) return "ROLLBACK_SIMULATION";
+        if (status.StartsWith("DATABASE_")) return "DATABASE_EXPORT";
         
         return status switch
         {

@@ -19,7 +19,11 @@ public class MigrationReportService : IMigrationReportService
         int migrationHealthScore,
         DateTime startedAt,
         DateTime completedAt,
-        string tempDirectory)
+        string tempDirectory,
+        string dbExportStatus = "",
+        int dbTableCount = 0,
+        int dbTotalRows = 0,
+        string dbExportS3Key = "")
     {
         if (!Directory.Exists(tempDirectory))
         {
@@ -38,7 +42,7 @@ public class MigrationReportService : IMigrationReportService
         }
         catch { }
 
-        var uploadedFiles = new[]
+        var uploadedFilesList = new List<string>
         {
             "assessment-report.json",
             "migration-manifest.json",
@@ -46,6 +50,11 @@ public class MigrationReportService : IMigrationReportService
             "migration-report.json",
             "migration-report.html"
         };
+        if (!string.IsNullOrEmpty(dbExportS3Key))
+        {
+            uploadedFilesList.Add("database-export.json");
+        }
+        var uploadedFiles = uploadedFilesList.ToArray();
 
         // 1. Generate JSON Report
         var reportData = new
@@ -65,6 +74,13 @@ public class MigrationReportService : IMigrationReportService
             dynamoDbTableName = dynamoTableName,
             lambdaSelfTestStatus = lambdaSelfTestStatus,
             migrationHealthScore = migrationHealthScore,
+            databaseExport = new
+            {
+                status = dbExportStatus,
+                tableCount = dbTableCount,
+                totalRows = dbTotalRows,
+                s3Key = dbExportS3Key
+            },
             costEstimation = new
             {
                 s3Storage = "0.08 USD/month",
@@ -215,7 +231,34 @@ public class MigrationReportService : IMigrationReportService
         htmlBuilder.AppendLine("                </td></tr>");
         htmlBuilder.AppendLine("            </tbody>");
         htmlBuilder.AppendLine("        </table>");
-        htmlBuilder.AppendLine("");
+        if (!string.IsNullOrEmpty(dbExportStatus))
+        {
+            htmlBuilder.AppendLine("        <!-- Database Export Details -->");
+            htmlBuilder.AppendLine("        <div class=\"section-title\">Xuất dữ liệu SQL Server</div>");
+            htmlBuilder.AppendLine("        <table>");
+            htmlBuilder.AppendLine("            <tbody>");
+            htmlBuilder.AppendLine($"                <tr><td style=\"width: 30%; color: #64748b;\">Trạng thái xuất</td><td>");
+            if (dbExportStatus.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase))
+            {
+                htmlBuilder.AppendLine("                    <span class=\"badge badge-success\">SUCCESS / COMPLETED</span>");
+            }
+            else
+            {
+                htmlBuilder.AppendLine("                    <span class=\"badge badge-warning\">FAILED / WARNING</span>");
+            }
+            htmlBuilder.AppendLine("                </td></tr>");
+            htmlBuilder.AppendLine($"                <tr><td style=\"color: #64748b;\">Số lượng bảng đã xuất</td><td>{dbTableCount} bảng</td></tr>");
+            htmlBuilder.AppendLine($"                <tr><td style=\"color: #64748b;\">Tổng số bản ghi (rows)</td><td>{dbTotalRows} dòng</td></tr>");
+            if (!string.IsNullOrEmpty(dbExportS3Key))
+            {
+                htmlBuilder.AppendLine($"                <tr><td style=\"color: #64748b;\">S3 Object Key</td><td class=\"monospace\">{dbExportS3Key}</td></tr>");
+            }
+            htmlBuilder.AppendLine("            </tbody>");
+            htmlBuilder.AppendLine("        </table>");
+            htmlBuilder.AppendLine("");
+        }
+
+        // Academic Note
         htmlBuilder.AppendLine("        <!-- Academic Note -->");
         htmlBuilder.AppendLine("        <div class=\"alert-academic\">");
         htmlBuilder.AppendLine("            <strong>Chú thích học thuật (Academic Note):</strong><br>");

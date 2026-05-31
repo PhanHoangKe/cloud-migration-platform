@@ -22,17 +22,20 @@ public class MigrationService : IMigrationService
     private readonly IWebHostEnvironment _env;
     private readonly IMigrationPackageService _packageService;
     private readonly IMigrationReportService _reportService;
+    private readonly IDatabaseExportService _dbExportService;
 
     public MigrationService(
         IConfiguration configuration, 
         IWebHostEnvironment env, 
         IMigrationPackageService packageService,
-        IMigrationReportService reportService)
+        IMigrationReportService reportService,
+        IDatabaseExportService dbExportService)
     {
         _configuration = configuration;
         _env = env;
         _packageService = packageService;
         _reportService = reportService;
+        _dbExportService = dbExportService;
     }
 
     public async Task<MigrationResultViewModel> StartMigrationAsync()
@@ -118,6 +121,45 @@ public class MigrationService : IMigrationService
             await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "SOURCE_PACKAGED", $"Source package zip created with size {zipSize}");
             AddLocalLog(result, "SOURCE_PACKAGED", $"Tạo tệp nén zip chứa mã nguồn thành công tại local: {zipPath}");
 
+            // Database Export Step
+            try
+            {
+                var dbExportResult = await _dbExportService.ExportDatabaseAsync(result.MigrationId);
+                result.DatabaseExportStatus = dbExportResult.ConnectionStatus && string.IsNullOrEmpty(dbExportResult.ErrorMessage) ? "SUCCESS" : "FAILED";
+                result.DatabaseExportS3Key = dbExportResult.S3Key ?? string.Empty;
+                result.DatabaseTableCount = dbExportResult.TotalTables;
+                result.DatabaseTotalRows = dbExportResult.TotalRows;
+                result.DatabaseExportErrorMessage = dbExportResult.ErrorMessage;
+
+                if (dbExportResult.ConnectionStatus)
+                {
+                    AddLocalLog(result, "DATABASE_CONNECTED", "Ket noi CSDL On-premise thanh cong.");
+                    if (string.IsNullOrEmpty(dbExportResult.ErrorMessage))
+                    {
+                        AddLocalLog(result, "DATABASE_EXPORTED", $"Xuat du lieu thanh cong: {dbExportResult.TotalTables} bang, {dbExportResult.TotalRows} dong.");
+                        AddLocalLog(result, "DATABASE_EXPORT_UPLOADED_TO_S3", "Tai tep database-export.json len S3 thanh cong.");
+                        if (!string.IsNullOrEmpty(dbExportResult.S3Key))
+                        {
+                            result.S3ObjectKeys.Add(dbExportResult.S3Key);
+                        }
+                    }
+                    else
+                    {
+                        AddLocalLog(result, "DATABASE_EXPORT_FAILED", $"Xuat CSDL co canh bao: {dbExportResult.ErrorMessage}");
+                    }
+                }
+                else
+                {
+                    AddLocalLog(result, "DATABASE_EXPORT_FAILED", $"Ket noi CSDL that bai: {dbExportResult.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                result.DatabaseExportStatus = "FAILED";
+                result.DatabaseExportErrorMessage = ex.Message;
+                AddLocalLog(result, "DATABASE_EXPORT_FAILED", $"Xuat CSDL gap loi he thong: {ex.Message}");
+            }
+
             // Step 5: Upload all 3 package files to S3
             var filesToUpload = new Dictionary<string, string>
             {
@@ -200,7 +242,11 @@ public class MigrationService : IMigrationService
                     migrationHealthScore,
                     startedAt,
                     completedAt,
-                    tempDirectory
+                    tempDirectory,
+                    result.DatabaseExportStatus,
+                    result.DatabaseTableCount,
+                    result.DatabaseTotalRows,
+                    result.DatabaseExportS3Key
                 );
 
                 result.ReportLocalHtmlPath = reportHtmlPath;

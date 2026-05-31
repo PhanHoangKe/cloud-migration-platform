@@ -132,12 +132,13 @@ public class RestoreSimulationService : IRestoreSimulationService
             result.MigrationId = latestMigrationId;
             AddLocalLog(result, "MIGRATION_FOUND", $"Tìm thấy gói di trú mới nhất: '{latestMigrationId}' (Thời gian chỉnh sửa cuối: {latestTime.ToLocalTime():yyyy-MM-dd HH:mm:ss})");
 
-            // Define the 5 target package files
+            // Define the target package files
             var expectedFiles = new[]
             {
                 new { Name = "assessment-report.json", Required = true, Description = "Báo cáo đánh giá chất lượng On-premise" },
                 new { Name = "migration-manifest.json", Required = true, Description = "Tệp Manifest định nghĩa hạ tầng đám mây đích" },
                 new { Name = "source-package.zip", Required = true, Description = "Gói mã nguồn nén ZIP dự án EduFlex" },
+                new { Name = "database-export.json", Required = false, Description = "Bản xuất dữ liệu SQL Server On-premise dạng JSON" },
                 new { Name = "migration-report.json", Required = false, Description = "Báo cáo di trú dạng JSON chứa metadata chi phí" },
                 new { Name = "migration-report.html", Required = false, Description = "Báo cáo di trú định dạng HTML tĩnh" }
             };

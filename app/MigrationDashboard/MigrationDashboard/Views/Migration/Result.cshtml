@@ -133,7 +133,7 @@
                     <h5 class="card-title-custom text-dark text-sm">
                         <i class="bi bi-cloud-arrow-up-fill text-indigo me-2"></i> Danh sách tệp tin đã upload lên S3
                     </h5>
-                    <span class="badge bg-indigo bg-opacity-10 text-indigo">3 tệp tin</span>
+                    <span class="badge bg-indigo bg-opacity-10 text-indigo">@Model.S3ObjectKeys.Count tệp tin</span>
                 </div>
 
                 @if (Model.IsSuccess && Model.S3ObjectKeys.Any())
@@ -150,10 +150,15 @@
                                 fileIcon = "bi-file-earmark-zip text-warning";
                                 fileDesc = "Mã nguồn đóng gói (.zip)";
                             }
+                            else if (fileName.Contains("database-export"))
+                            {
+                                fileIcon = "bi-database-fill-check text-info";
+                                fileDesc = "Bản xuất dữ liệu SQL Server (.json)";
+                            }
                             else if (fileName.Contains("report"))
                             {
                                 fileIcon = "bi-file-earmark-bar-graph text-success";
-                                fileDesc = "Báo cáo đánh giá nguồn (.json)";
+                                fileDesc = "Báo cáo di trú (.json/.html)";
                             }
                             else if (fileName.Contains("manifest"))
                             {
@@ -182,6 +187,84 @@
                     <div class="text-center text-muted py-3">
                         <i class="bi bi-cloud-slash fs-3"></i>
                         <p class="mb-0 text-xs">Chưa có tệp tin nào được tải lên S3.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Database Export Details Card -->
+            <div class="dashboard-card mt-4">
+                <div class="card-header-custom border-bottom pb-2 mb-3">
+                    <h5 class="card-title-custom text-dark text-sm">
+                        <i class="bi bi-database-fill-gear text-indigo me-2"></i> Trạng thái xuất dữ liệu SQL Server
+                    </h5>
+                    @if (Model.DatabaseExportStatus == "SUCCESS")
+                    {
+                        <span class="badge bg-success bg-opacity-10 text-success">SUCCESS</span>
+                    }
+                    else if (Model.DatabaseExportStatus == "FAILED")
+                    {
+                        <span class="badge bg-warning bg-opacity-10 text-warning">WARNING / OFFLINE</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary">PENDING</span>
+                    }
+                </div>
+
+                @if (Model.DatabaseExportStatus == "SUCCESS")
+                {
+                    <div class="alert alert-success bg-success bg-opacity-5 border border-success border-opacity-10 rounded-3 p-3 mb-3 text-xs">
+                        <div class="d-flex align-items-center gap-2 text-success font-semibold mb-1">
+                            <i class="bi bi-check-circle-fill"></i> Đã đóng gói thành công dữ liệu CSDL On-premise
+                        </div>
+                        <p class="text-secondary mb-0">Hệ thống đã tự động kết xuất cấu trúc schema và các bản ghi mẫu sang tệp cấu trúc JSON, lưu trữ an toàn tại S3.</p>
+                    </div>
+
+                    <div class="row g-3 text-center mb-2">
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-xxs text-muted d-block text-uppercase font-semibold">Số lượng bảng</span>
+                                <strong class="fs-4 text-dark font-bold">@Model.DatabaseTableCount</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-xxs text-muted d-block text-uppercase font-semibold">Tổng số dòng</span>
+                                <strong class="fs-4 text-dark font-bold">@Model.DatabaseTotalRows.ToString("N0")</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.DatabaseExportS3Key))
+                    {
+                        <div class="mt-3 p-2 bg-light rounded-3 border text-xxs font-monospace" style="overflow-wrap: break-word;">
+                            <span class="text-muted d-block font-sans mb-1" style="font-family: sans-serif;">S3 Object Key:</span>
+                            <a href="http://localhost:4566/@Model.S3BucketName/@Model.DatabaseExportS3Key" target="_blank" class="text-indigo text-decoration-none font-semibold">
+                                s3://@Model.S3BucketName/@Model.DatabaseExportS3Key
+                            </a>
+                        </div>
+                    }
+                }
+                else if (Model.DatabaseExportStatus == "FAILED")
+                {
+                    <div class="alert alert-warning bg-warning bg-opacity-5 border border-warning border-opacity-15 rounded-3 p-3 text-xs mb-0">
+                        <div class="d-flex align-items-center gap-2 text-warning font-semibold mb-2">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Kết nối Cơ sở dữ liệu On-premise ngoại tuyến
+                        </div>
+                        <p class="text-secondary mb-2">Không thể kết nối đến SQL Server để thực hiện xuất dữ liệu tự động. Tiến trình đóng gói source code và cấu hình cloud vẫn hoàn tất.</p>
+                        @if (!string.IsNullOrEmpty(Model.DatabaseExportErrorMessage))
+                        {
+                            <div class="bg-white bg-opacity-50 p-2 rounded border border-warning border-opacity-10 text-muted font-monospace text-xxs mb-0" style="font-size: 10px; overflow-x: auto; max-height: 80px;">
+                                Lỗi chi tiết: @Model.DatabaseExportErrorMessage
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-database-slash fs-3"></i>
+                        <p class="mb-0 text-xs">Chưa thực hiện tiến trình xuất cơ sở dữ liệu.</p>
                     </div>
                 }
             </div>
@@ -242,18 +325,44 @@
                         </div>
                     </div>
 
-                    <!-- Step 5 -->
+                    <!-- Step 5: Database Export -->
                     <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("UPLOADED_TO_S3") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("UPLOADED_TO_S3")) { <i class="bi bi-check-lg text-white"></i> } else { <span>5</span> }
+                        @{
+                            string dbBadgeClass = Model.DatabaseExportStatus == "SUCCESS" ? "success" : 
+                                                 (Model.DatabaseExportStatus == "FAILED" ? "warning" : "pending");
+                        }
+                        <div class="step-badge @dbBadgeClass" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
+                            @if (Model.DatabaseExportStatus == "SUCCESS")
+                            {
+                                <i class="bi bi-check-lg text-white"></i>
+                            }
+                            else if (Model.DatabaseExportStatus == "FAILED")
+                            {
+                                <i class="bi bi-exclamation-lg text-white"></i>
+                            }
+                            else
+                            {
+                                <span>5</span>
+                            }
                         </div>
                         <div>
-                            <strong class="text-xs text-dark d-block">Upload gói di trú lên Amazon S3</strong>
-                            <span class="text-xxs text-muted">Đẩy đồng thời cả 3 tệp tin lên AWS S3 bucket giả lập theo cấu trúc thư mục của MigrationId.</span>
+                            <strong class="text-xs text-dark d-block">Xuất dữ liệu SQL Server (database-export.json)</strong>
+                            <span class="text-xxs text-muted">Kết nối cơ sở dữ liệu On-premise, xuất thông tin bảng và trích xuất mẫu dữ liệu 20 bản ghi.</span>
                         </div>
                     </div>
 
                     <!-- Step 6 -->
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="step-badge @(HasLog("UPLOADED_TO_S3") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
+                            @if (HasLog("UPLOADED_TO_S3")) { <i class="bi bi-check-lg text-white"></i> } else { <span>6</span> }
+                        </div>
+                        <div>
+                            <strong class="text-xs text-dark d-block">Upload gói di trú lên Amazon S3</strong>
+                            <span class="text-xxs text-muted">Đẩy đồng thời các tệp tin đóng gói lên AWS S3 bucket giả lập theo cấu trúc thư mục của MigrationId.</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 7 -->
                     <div class="d-flex align-items-start gap-3">
                         @{
                             string testBadgeClass = isSelfTestPassed ? "success" : (isSelfTestFailed ? "danger" : "pending");
@@ -269,7 +378,7 @@
                             }
                             else
                             {
-                                <span>6</span>
+                                <span>7</span>
                             }
                         </div>
                         <div>
@@ -278,10 +387,10 @@
                         </div>
                     </div>
 
-                    <!-- Step 7 -->
+                    <!-- Step 8 -->
                     <div class="d-flex align-items-start gap-3">
                         <div class="step-badge @(HasLog("REPORT_GENERATED") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("REPORT_GENERATED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>7</span> }
+                            @if (HasLog("REPORT_GENERATED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>8</span> }
                         </div>
                         <div>
                             <strong class="text-xs text-dark d-block">Khởi tạo báo cáo di trú (migration-report)</strong>
@@ -289,10 +398,10 @@
                         </div>
                     </div>
 
-                    <!-- Step 8 -->
+                    <!-- Step 9 -->
                     <div class="d-flex align-items-start gap-3">
                         <div class="step-badge @(HasLog("REPORT_UPLOADED_TO_S3") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("REPORT_UPLOADED_TO_S3")) { <i class="bi bi-check-lg text-white"></i> } else { <span>8</span> }
+                            @if (HasLog("REPORT_UPLOADED_TO_S3")) { <i class="bi bi-check-lg text-white"></i> } else { <span>9</span> }
                         </div>
                         <div>
                             <strong class="text-xs text-dark d-block">Tải báo cáo di trú lên Amazon S3</strong>
@@ -412,13 +521,17 @@
                             {
                                 <div class="console-line">
                                     <span class="text-muted">[@log.Timestamp]</span>
-                                    @if (log.Status == "STARTED" || log.Status == "SELF_TEST_TRIGGERED")
+                                    @if (log.Status == "STARTED" || log.Status == "SELF_TEST_TRIGGERED" || log.Status == "DATABASE_CONNECTED")
                                     {
                                         <span class="c-info">[INFO]</span>
                                     }
-                                    else if (log.Status == "ASSESSMENT_EXPORTED" || log.Status == "MANIFEST_CREATED" || log.Status == "SOURCE_PACKAGED" || log.Status == "UPLOADED_TO_S3" || log.Status == "SELF_TEST_PASSED")
+                                    else if (log.Status == "ASSESSMENT_EXPORTED" || log.Status == "MANIFEST_CREATED" || log.Status == "SOURCE_PACKAGED" || log.Status == "UPLOADED_TO_S3" || log.Status == "SELF_TEST_PASSED" || log.Status == "DATABASE_EXPORTED" || log.Status == "DATABASE_EXPORT_UPLOADED_TO_S3")
                                     {
                                         <span class="c-success">[SUCCESS]</span>
+                                    }
+                                    else if (log.Status == "DATABASE_EXPORT_FAILED")
+                                    {
+                                        <span class="c-warning">[WARNING]</span>
                                     }
                                     else
                                     {

@@ -22,4 +22,11 @@ public class MigrationResultViewModel
     public string ReportHtmlS3Key { get; set; } = string.Empty;
     public bool ReportGenerated { get; set; }
     public string ReportLocalHtmlPath { get; set; } = string.Empty;
+
+    // Database Export fields
+    public string DatabaseExportStatus { get; set; } = string.Empty;
+    public string DatabaseExportS3Key { get; set; } = string.Empty;
+    public int DatabaseTableCount { get; set; }
+    public int DatabaseTotalRows { get; set; }
+    public string? DatabaseExportErrorMessage { get; set; }
 }

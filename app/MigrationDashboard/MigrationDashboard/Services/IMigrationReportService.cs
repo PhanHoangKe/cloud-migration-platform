@@ -16,6 +16,10 @@ public interface IMigrationReportService
         int migrationHealthScore,
         DateTime startedAt,
         DateTime completedAt,
-        string tempDirectory
+        string tempDirectory,
+        string dbExportStatus = "",
+        int dbTableCount = 0,
+        int dbTotalRows = 0,
+        string dbExportS3Key = ""
     );
 }

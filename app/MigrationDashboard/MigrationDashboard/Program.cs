@@ -12,6 +12,7 @@ builder.Services.AddScoped<IMigrationReportService, MigrationReportService>();
 builder.Services.AddScoped<IRestoreSimulationService, RestoreSimulationService>();
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<ISecurityComplianceService, SecurityComplianceService>();
+builder.Services.AddScoped<IDatabaseExportService, DatabaseExportService>();
 
 var app = builder.Build();
 

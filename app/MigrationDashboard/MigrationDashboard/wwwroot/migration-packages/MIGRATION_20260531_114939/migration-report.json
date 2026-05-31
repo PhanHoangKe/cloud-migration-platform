@@ -1,0 +1,55 @@
+﻿{
+  "migrationId": "MIGRATION_20260531_114939",
+  "projectName": "EduFlex",
+  "sourcePath": "D:\\cloud-migration-platform\\app\\OnPremApp\\EduFlex - ĐTĐM",
+  "migrationStrategy": "Re-platform",
+  "cloudTarget": "LocalStack AWS Simulation",
+  "startedAt": "2026-05-31T04:49:39.165Z",
+  "completedAt": "2026-05-31T04:50:10.447Z",
+  "durationSeconds": 31.28,
+  "readinessScore": 90,
+  "packageSizeMb": "78.64 MB",
+  "uploadedFiles": [
+    "assessment-report.json",
+    "migration-manifest.json",
+    "source-package.zip",
+    "migration-report.json",
+    "migration-report.html"
+  ],
+  "s3BucketName": "cloud-migration-backup-kedep",
+  "dynamoDbTableName": "cloud-migration-logs-kedep",
+  "lambdaSelfTestStatus": "Passed",
+  "migrationHealthScore": 95,
+  "databaseExport": {
+    "status": "FAILED",
+    "tableCount": 0,
+    "totalRows": 0,
+    "s3Key": ""
+  },
+  "costEstimation": {
+    "s3Storage": "0.08 USD/month",
+    "dynamoDbRequests": "0.10 USD/month",
+    "lambdaInvocations": "0.05 USD/month",
+    "networkOther": "0.07 USD/month",
+    "total": "0.30 USD/month"
+  },
+  "beforeAfterSummary": [
+    {
+      "before": "On-premise file storage",
+      "after": "S3 object storage"
+    },
+    {
+      "before": "Local/manual logs",
+      "after": "DynamoDB migration logs"
+    },
+    {
+      "before": "Manual verification",
+      "after": "Lambda self-test"
+    },
+    {
+      "before": "Manual infrastructure",
+      "after": "Terraform IaC"
+    }
+  ],
+  "academicNote": "This report is generated for academic cloud migration simulation using LocalStack. Cost values are illustrative only and not official AWS pricing."
+}
