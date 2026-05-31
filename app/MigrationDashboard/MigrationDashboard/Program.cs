@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IMigrationService, MigrationService>();
+builder.Services.AddScoped<ICloudResourceService, CloudResourceService>();
 
 var app = builder.Build();
 

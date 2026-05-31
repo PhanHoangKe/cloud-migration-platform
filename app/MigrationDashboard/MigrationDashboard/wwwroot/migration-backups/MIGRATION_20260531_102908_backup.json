@@ -1,0 +1,9 @@
+﻿{
+  "migrationId": "MIGRATION_20260531_102908",
+  "sourceAppPath": "D:\\cloud-migration-platform\\app\\OnPremApp\\EduFlex - ĐTĐM",
+  "sourceType": "ASP.NET Core 9 + SQL Server",
+  "createdAt": "2026-05-31T03:29:09.3385430Z",
+  "migratedFilesCount": 142,
+  "migratedRecordsCount": 2850,
+  "note": "Academic migration simulation using LocalStack and Terraform"
+}

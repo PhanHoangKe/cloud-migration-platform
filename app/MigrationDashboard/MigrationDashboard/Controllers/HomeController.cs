@@ -1,21 +1,26 @@
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MigrationDashboard.Models;
+using MigrationDashboard.Services;
 
 namespace MigrationDashboard.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly ICloudResourceService _cloudResourceService;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, ICloudResourceService cloudResourceService)
     {
         _logger = logger;
+        _cloudResourceService = cloudResourceService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View();
+        var dashboardData = await _cloudResourceService.GetDashboardDataAsync();
+        return View(dashboardData);
     }
 
     public IActionResult Privacy()

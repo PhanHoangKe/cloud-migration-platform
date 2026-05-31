@@ -1,5 +1,24 @@
+@model MigrationDashboard.Models.CloudResourceDashboardViewModel
 @{
     ViewData["Title"] = "Cloud Migration Dashboard";
+}
+
+<!-- Section: LocalStack Warning Banner -->
+@if (!Model.IsLocalStackAvailable)
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning border-warning border-opacity-25 rounded-3 d-flex align-items-center justify-content-between p-3 mb-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                    <div>
+                        <strong>Cảnh báo: LocalStack unavailable!</strong> Cổng kết nối LocalStack <code class="text-dark">http://localhost:4566</code> đang ngoại tuyến. Hệ thống hiển thị trạng thái giả lập (Offline) để demo ổn định.
+                    </div>
+                </div>
+                <span class="badge bg-warning text-dark">Simulated Mode</span>
+            </div>
+        </div>
+    </div>
 }
 
 <!-- Section: Hero & Health Score -->
@@ -30,15 +49,27 @@
             <div class="dashboard-card text-center d-flex flex-column align-items-center justify-content-center">
                 <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-3">Migration Health</h6>
                 <div class="health-score-container">
-                    <div class="health-circle-outer" id="healthScoreCircle" style="background: conic-gradient(#ef4444 0deg, #ef4444 126deg, #e2e8f0 0deg);">
+                    @{
+                        string healthColor = Model.MigrationHealthScore >= 75 ? "#10b981" : (Model.MigrationHealthScore >= 50 ? "#3b82f6" : "#ef4444");
+                        double healthDegrees = Model.MigrationHealthScore * 3.6;
+                        string healthLabel = Model.MigrationHealthScore >= 90 ? "Cloud-Native" : (Model.MigrationHealthScore >= 50 ? "Hybrid" : "On-Premise");
+                    }
+                    <div class="health-circle-outer" id="healthScoreCircle" style="background: conic-gradient(@healthColor 0deg, @healthColor @(healthDegrees)deg, #334155 @(healthDegrees)deg);">
                         <div class="health-circle-inner">
-                            <span class="health-value" id="healthScoreValue">35</span>
-                            <span class="health-label" id="healthScoreLabel">On-Premise</span>
+                            <span class="health-value" id="healthScoreValue">@Model.MigrationHealthScore</span>
+                            <span class="health-label" id="healthScoreLabel">@healthLabel</span>
                         </div>
                     </div>
                 </div>
                 <div class="mt-3 text-muted small" id="healthScoreSub">
-                    Hạ tầng tại local chưa chuyển đổi.
+                    @if (!Model.IsLocalStackAvailable)
+                    {
+                        <span>LocalStack offline. Trạng thái giả lập.</span>
+                    }
+                    else
+                    {
+                        <span>Hạ tầng di trú hoàn tất @Model.MigrationHealthScore%.</span>
+                    }
                 </div>
             </div>
         </div>
@@ -52,39 +83,56 @@
         <div class="col-xl-3 col-md-6">
             <div class="dashboard-card" id="statCardS3">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="stat-icon warning" id="statIconS3">
+                    @{
+                        string s3IconClass = string.IsNullOrEmpty(Model.S3ErrorMessage) ? "success" : "danger";
+                        string s3BadgeClass = string.IsNullOrEmpty(Model.S3ErrorMessage) ? "success" : "danger";
+                        string s3BadgeText = string.IsNullOrEmpty(Model.S3ErrorMessage) ? "Active" : "Error";
+                        string s3ValueText = Model.BackupFilesCount > 0 ? $"{Model.BackupFilesCount} Files" : "0 Files";
+                    }
+                    <div class="stat-icon @s3IconClass" id="statIconS3">
                         <i class="bi bi-folder-symlink"></i>
                     </div>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary" id="badgeS3">Pending</span>
+                    <span class="badge bg-@s3BadgeClass bg-opacity-10 text-@s3BadgeClass" id="badgeS3">@s3BadgeText</span>
                 </div>
                 <h6 class="stat-label">S3 Backup Bucket</h6>
-                <h4 class="stat-value" id="valS3">Offline</h4>
+                <h4 class="stat-value" id="valS3">@s3ValueText</h4>
             </div>
         </div>
         <!-- Card 2: DynamoDB Logs -->
         <div class="col-xl-3 col-md-6">
             <div class="dashboard-card" id="statCardDynamo">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="stat-icon primary" id="statIconDynamo">
+                    @{
+                        string dbIconClass = string.IsNullOrEmpty(Model.DynamoDbErrorMessage) ? "success" : "danger";
+                        string dbBadgeClass = string.IsNullOrEmpty(Model.DynamoDbErrorMessage) ? "success" : "danger";
+                        string dbBadgeText = string.IsNullOrEmpty(Model.DynamoDbErrorMessage) ? "Ready" : "Error";
+                        string dbValueText = Model.MigrationLogsCount > 0 ? $"{Model.MigrationLogsCount} Logs" : "0 Logs";
+                    }
+                    <div class="stat-icon @dbIconClass" id="statIconDynamo">
                         <i class="bi bi-journal-text"></i>
                     </div>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary" id="badgeDynamo">Pending</span>
+                    <span class="badge bg-@dbBadgeClass bg-opacity-10 text-@dbBadgeClass" id="badgeDynamo">@dbBadgeText</span>
                 </div>
                 <h6 class="stat-label">DynamoDB Logs</h6>
-                <h4 class="stat-value" id="valDynamo">Offline</h4>
+                <h4 class="stat-value" id="valDynamo">@dbValueText</h4>
             </div>
         </div>
         <!-- Card 3: Lambda Function -->
         <div class="col-xl-3 col-md-6">
             <div class="dashboard-card" id="statCardLambda">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="stat-icon danger" id="statIconLambda">
+                    @{
+                        string lambdaIconClass = Model.LatestSelfTestStatus == "Passed" ? "success" : (Model.LatestSelfTestStatus == "Failed" ? "danger" : "secondary");
+                        string lambdaBadgeClass = Model.LatestSelfTestStatus == "Passed" ? "success" : (Model.LatestSelfTestStatus == "Failed" ? "danger" : "secondary");
+                        string lambdaBadgeText = Model.LatestSelfTestStatus;
+                    }
+                    <div class="stat-icon @lambdaIconClass" id="statIconLambda">
                         <i class="bi bi-lightning-charge"></i>
                     </div>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary" id="badgeLambda">Pending</span>
+                    <span class="badge bg-@lambdaBadgeClass bg-opacity-10 text-@lambdaBadgeClass" id="badgeLambda">@lambdaBadgeText</span>
                 </div>
                 <h6 class="stat-label">Lambda Self-test</h6>
-                <h4 class="stat-value" id="valLambda">Offline</h4>
+                <h4 class="stat-value" id="valLambda">@Model.LatestSelfTestStatus</h4>
             </div>
         </div>
         <!-- Card 4: Estimated Cost -->
@@ -97,7 +145,7 @@
                     <span class="badge bg-success bg-opacity-10 text-success">Active</span>
                 </div>
                 <h6 class="stat-label">Estimated Cost</h6>
-                <h4 class="stat-value" id="valCost">$0.00/month</h4>
+                <h4 class="stat-value" id="valCost">$@Model.EstimatedMonthlyCost.ToString("F2")/month</h4>
             </div>
         </div>
     </div>
@@ -127,36 +175,36 @@
 
                 <!-- Timeline -->
                 <div class="timeline" id="migrationTimeline">
-                    <div class="timeline-item" id="timeStep1">
+                    <div class="timeline-item @(Model.BackupFilesCount > 0 ? "success" : "")" id="timeStep1">
                         <div class="timeline-badge">
-                            <i class="bi bi-1-circle-fill"></i>
+                            @if (Model.BackupFilesCount > 0) { <i class="bi bi-check-lg"></i> } else { <i class="bi bi-1-circle-fill"></i> }
                         </div>
                         <div class="timeline-content">
                             <h6 class="timeline-title">Export dữ liệu từ On-premise</h6>
                             <p class="timeline-desc">Kết xuất Database SQL Server thành file backup .bak và đóng gói dữ liệu.</p>
                         </div>
                     </div>
-                    <div class="timeline-item" id="timeStep2">
+                    <div class="timeline-item @(Model.BackupFilesCount > 0 ? "success" : "")" id="timeStep2">
                         <div class="timeline-badge">
-                            <i class="bi bi-2-circle-fill"></i>
+                            @if (Model.BackupFilesCount > 0) { <i class="bi bi-check-lg"></i> } else { <i class="bi bi-2-circle-fill"></i> }
                         </div>
                         <div class="timeline-content">
                             <h6 class="timeline-title">Upload backup lên S3</h6>
                             <p class="timeline-desc">Chuyển tệp dữ liệu lưu trữ vào Amazon S3 Bucket được mô phỏng bởi LocalStack.</p>
                         </div>
                     </div>
-                    <div class="timeline-item" id="timeStep3">
+                    <div class="timeline-item @(Model.MigrationLogsCount > 2 ? "success" : "")" id="timeStep3">
                         <div class="timeline-badge">
-                            <i class="bi bi-3-circle-fill"></i>
+                            @if (Model.MigrationLogsCount > 2) { <i class="bi bi-check-lg"></i> } else { <i class="bi bi-3-circle-fill"></i> }
                         </div>
                         <div class="timeline-content">
                             <h6 class="timeline-title">Ghi migration logs vào DynamoDB</h6>
                             <p class="timeline-desc">Tạo lịch sử chuyển đổi và lưu trạng thái chuyển đổi ứng dụng vào DynamoDB table.</p>
                         </div>
                     </div>
-                    <div class="timeline-item" id="timeStep4">
+                    <div class="timeline-item @(Model.LatestSelfTestStatus == "Passed" ? "success" : "")" id="timeStep4">
                         <div class="timeline-badge">
-                            <i class="bi bi-4-circle-fill"></i>
+                            @if (Model.LatestSelfTestStatus == "Passed") { <i class="bi bi-check-lg"></i> } else { <i class="bi bi-4-circle-fill"></i> }
                         </div>
                         <div class="timeline-content">
                             <h6 class="timeline-title">Chạy Lambda Post-migration Self-test</h6>
@@ -173,7 +221,22 @@
                     <span class="badge bg-dark text-white border border-secondary border-opacity-25 px-2 py-1">Terraform & LocalStack</span>
                 </div>
                 <div class="console-box" id="migrationConsole">
-                    <div class="console-line text-muted">Ready to run simulation. Click "Start Migration" above to begin...</div>
+                    @if (Model.RecentLogs.Any())
+                    {
+                        <div class="console-line text-success">[INFO] Connected to LocalStack database logs... displaying recent events:</div>
+                        @foreach (var log in Model.RecentLogs.Take(5))
+                        {
+                            <div class="console-line">
+                                <span class="text-muted">[@log.Timestamp]</span>
+                                <span class="c-info">[@log.Status]</span>
+                                <span class="text-white">@log.Message</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="console-line text-muted">Ready to run simulation. Click "Start Migration" above to begin...</div>
+                    }
                 </div>
             </div>
         </div>
@@ -201,8 +264,12 @@
                             <div class="resource-type">Backup Storage</div>
                         </div>
                     </div>
-                    <div class="resource-value" data-bs-toggle="tooltip" title="cloud-migration-backup-kedep">cloud-migration-backup-kedep</div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="@Model.S3BucketName">@Model.S3BucketName</div>
                 </div>
+                @if (!string.IsNullOrEmpty(Model.S3ErrorMessage))
+                {
+                    <div class="text-danger text-xs px-3 mb-2"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.S3ErrorMessage</div>
+                }
                 
                 <!-- Resource 2 -->
                 <div class="resource-list-item">
@@ -215,8 +282,12 @@
                             <div class="resource-type">Log Database</div>
                         </div>
                     </div>
-                    <div class="resource-value" data-bs-toggle="tooltip" title="cloud-migration-logs-kedep">cloud-migration-logs-kedep</div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="@Model.DynamoDbTableName">@Model.DynamoDbTableName</div>
                 </div>
+                @if (!string.IsNullOrEmpty(Model.DynamoDbErrorMessage))
+                {
+                    <div class="text-danger text-xs px-3 mb-2"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.DynamoDbErrorMessage</div>
+                }
                 
                 <!-- Resource 3 -->
                 <div class="resource-list-item">
@@ -229,8 +300,12 @@
                             <div class="resource-type">Serverless Self-test</div>
                         </div>
                     </div>
-                    <div class="resource-value" data-bs-toggle="tooltip" title="cloud-migration-self-test-kedep">cloud-migration-self-test-kedep</div>
+                    <div class="resource-value" data-bs-toggle="tooltip" title="@Model.LambdaFunctionName">@Model.LambdaFunctionName</div>
                 </div>
+                @if (!string.IsNullOrEmpty(Model.LambdaErrorMessage))
+                {
+                    <div class="text-danger text-xs px-3 mb-2"><i class="bi bi-exclamation-circle-fill me-1"></i> @Model.LambdaErrorMessage</div>
+                }
                 
                 <!-- Resource 4 -->
                 <div class="resource-list-item">
@@ -267,6 +342,109 @@
     </div>
 </div>
 
+<!-- Section: Live Cloud Resource Backups & Logs Tables -->
+<div class="row g-4 mb-4">
+    <!-- S3 Backups Table -->
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="card-header-custom border-bottom pb-2">
+                <h5 class="card-title-custom text-warning">
+                    <i class="bi bi-file-earmark-zip-fill"></i> Recent S3 Backups
+                </h5>
+                <span class="badge bg-warning bg-opacity-10 text-warning">@Model.BackupFilesCount Total</span>
+            </div>
+            <div class="table-responsive mt-3" style="max-height: 280px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0 text-sm">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Object Key</th>
+                            <th>Size</th>
+                            <th>Last Modified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentBackups.Any())
+                        {
+                            @foreach (var backup in Model.RecentBackups)
+                            {
+                                <tr>
+                                    <td class="font-monospace text-xs text-dark font-semibold">@backup.Key</td>
+                                    <td>@((backup.Size / 1024.0).ToString("F1")) KB</td>
+                                    <td class="text-muted text-xs">@backup.LastModified.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <i class="bi bi-folder2-open d-block fs-3 mb-2 text-secondary"></i>
+                                    No backup files found in S3 bucket.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- DynamoDB Logs Table -->
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="card-header-custom border-bottom pb-2">
+                <h5 class="card-title-custom text-primary">
+                    <i class="bi bi-database-fill"></i> Recent Migration Logs
+                </h5>
+                <span class="badge bg-primary bg-opacity-10 text-primary">@Model.MigrationLogsCount Total</span>
+            </div>
+            <div class="table-responsive mt-3" style="max-height: 280px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0 text-sm">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>MigrationId</th>
+                            <th>Status</th>
+                            <th>Message</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentLogs.Any())
+                        {
+                            @foreach (var log in Model.RecentLogs)
+                            {
+                                <tr>
+                                    <td class="font-monospace text-xs text-primary font-semibold">@log.MigrationId</td>
+                                    <td>
+                                        @{
+                                            string badgeColor = log.Status == "COMPLETED" || log.Status == "SELF_TEST_PASSED" ? "success" :
+                                                                (log.Status == "STARTED" || log.Status == "SELF_TEST_TRIGGERED" ? "info" : "danger");
+                                        }
+                                        <span class="badge bg-@badgeColor bg-opacity-10 text-@badgeColor text-xs">@log.Status</span>
+                                    </td>
+                                    <td class="text-xs text-dark" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@log.Message">
+                                        @log.Message
+                                    </td>
+                                    <td class="text-muted text-xs">@log.Timestamp</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="bi bi-journal-x d-block fs-3 mb-2 text-secondary"></i>
+                                    No migration logs found in DynamoDB.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Section: Cost Estimation & Architecture -->
 <div class="row g-4 mb-4">
     <!-- Cost Estimation -->
@@ -276,7 +454,7 @@
                 <h5 class="card-title-custom">
                     <i class="bi bi-currency-dollar text-warning"></i> Cost Estimation
                 </h5>
-                <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$0.00 / Month</span>
+                <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$@Model.EstimatedMonthlyCost.ToString("F2") / Month</span>
             </div>
             
             <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3">
@@ -365,11 +543,16 @@
             // 1. Initialize Cost Chart
             const ctx = document.getElementById('costChart').getContext('2d');
             
-            // Default simulated costs data
+            // Dynamic monthly simulated costs calculated on viewmodel counts
+            const s3Cost = @(Model.BackupFilesCount > 0 ? 0.08 : 0.0);
+            const dbCost = @(Model.MigrationLogsCount > 0 ? 0.10 : 0.0);
+            const lambdaCost = @(Model.LatestSelfTestStatus == "Passed" ? 0.05 : 0.0);
+            const otherCost = @(Model.EstimatedMonthlyCost > 0 ? 0.07 : 0.0);
+
             const costData = {
                 labels: ['S3 Storage', 'DynamoDB', 'Lambda', 'Other'],
                 datasets: [{
-                    data: [0.08, 0.10, 0.05, 0.07],
+                    data: [s3Cost, dbCost, lambdaCost, otherCost],
                     backgroundColor: [
                         '#6366f1', // Indigo S3
                         '#10b981', // Emerald DynamoDB
@@ -411,44 +594,13 @@
                 }
             });
 
-            // 2. Migration Simulator Logic
+            // 2. Migration Form Submit Handler
             const btnStart = document.getElementById("btnStartMigration");
             const progressBar = document.getElementById("migrationProgressBar");
             const progressContainer = document.getElementById("migrationProgressContainer");
             const consoleBox = document.getElementById("migrationConsole");
             
-            // Timeline Steps elements
-            const step1 = document.getElementById("timeStep1");
-            const step2 = document.getElementById("timeStep2");
-            const step3 = document.getElementById("timeStep3");
-            const step4 = document.getElementById("timeStep4");
-
-            // Stat Cards status elements
-            const valS3 = document.getElementById("valS3");
-            const badgeS3 = document.getElementById("badgeS3");
-            const statIconS3 = document.getElementById("statIconS3");
-            const statCardS3 = document.getElementById("statCardS3");
-
-            const valDynamo = document.getElementById("valDynamo");
-            const badgeDynamo = document.getElementById("badgeDynamo");
-            const statIconDynamo = document.getElementById("statIconDynamo");
-            const statCardDynamo = document.getElementById("statCardDynamo");
-
-            const valLambda = document.getElementById("valLambda");
-            const badgeLambda = document.getElementById("badgeLambda");
-            const statIconLambda = document.getElementById("statIconLambda");
-            const statCardLambda = document.getElementById("statCardLambda");
-
-            const valCost = document.getElementById("valCost");
-            const costTotalBadge = document.getElementById("costTotalBadge");
-
-            // Health Score elements
-            const healthCircle = document.getElementById("healthScoreCircle");
-            const healthValue = document.getElementById("healthScoreValue");
-            const healthLabel = document.getElementById("healthScoreLabel");
-            const healthSub = document.getElementById("healthScoreSub");
-
-            // Console logging function
+            // Console logger function
             function logToConsole(text, type = 'info') {
                 const line = document.createElement("div");
                 line.className = "console-line";
@@ -465,15 +617,6 @@
                 } else if (type === 'success') {
                     prefix = "[SUCCESS] ";
                     classType = "c-success";
-                } else if (type === 'warning') {
-                    prefix = "[WARN] ";
-                    classType = "c-warning";
-                } else if (type === 'error') {
-                    prefix = "[ERROR] ";
-                    classType = "c-error";
-                } else if (type === 'lambda') {
-                    prefix = "[LAMBDA LOG] ";
-                    classType = "c-success";
                 }
                 
                 line.innerHTML = `<span class="${classType}">${prefix}${text}</span>`;
@@ -481,37 +624,22 @@
                 consoleBox.scrollTop = consoleBox.scrollHeight;
             }
 
-            // Update health gauge background degree based on score
-            function updateHealthScore(score, label, subText, color) {
-                healthValue.textContent = score;
-                healthLabel.textContent = label;
-                healthSub.textContent = subText;
-                
-                // Conic gradient mapping: score / 100 * 360 degrees
-                const deg = (score / 100) * 360;
-                healthCircle.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #334155 ${deg}deg)`;
-            }
-
-            // Form Submit Listener to trigger loading states
             const migrationForm = document.getElementById("migrationForm");
             if (migrationForm) {
                 migrationForm.addEventListener("submit", function (e) {
-                    // Update button content
                     btnStart.disabled = true;
                     btnStart.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i> Migrating...`;
                     btnStart.classList.remove("btn-primary");
                     btnStart.classList.add("btn-warning");
                     
-                    // Show progress bar container and animate to mid point
                     progressContainer.classList.remove("d-none");
                     progressBar.style.width = "45%";
                     
-                    // Print initial logs into CLI console
                     consoleBox.innerHTML = "";
-                    logToConsole("Initializing backend connection to LocalStack (localhost:4566)...", "info");
-                    logToConsole("Generating unique Migration ID...", "info");
-                    logToConsole("Provisioning AWS S3 & DynamoDB endpoints using AWS .NET SDK...", "tf");
-                    logToConsole("Executing academic migration workflow...", "info");
+                    logToConsole("Initializing connection to LocalStack endpoints...", "info");
+                    logToConsole("Reading credential configurations...", "info");
+                    logToConsole("Provisioning cloud backup resources...", "tf");
+                    logToConsole("Uploading local application SQL database backups...", "info");
                 });
             }
         });
