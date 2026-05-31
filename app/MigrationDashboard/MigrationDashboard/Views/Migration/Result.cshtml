@@ -1,0 +1,209 @@
+@model MigrationDashboard.Models.MigrationResultViewModel
+@{
+    ViewData["Title"] = "Migration Result";
+}
+
+<div class="container-fluid py-4">
+    <!-- Top Result Banner -->
+    <div class="row mb-4">
+        <div class="col-12">
+            @if (Model.IsSuccess)
+            {
+                <div class="card bg-success bg-opacity-10 border border-success border-opacity-25 rounded-4 p-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; font-size: 28px;">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-success font-bold mb-1" style="font-weight: 700;">Chuyển Đổi Thành Công!</h3>
+                            <p class="text-secondary mb-0">Hạ tầng ứng dụng đã được di trú thành công lên LocalStack Cloud bằng Terraform.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-4 p-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; font-size: 28px;">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-danger font-bold mb-1" style="font-weight: 700;">Chuyển Đổi Thất Bại!</h3>
+                            <p class="text-secondary mb-0">Hệ thống phát hiện lỗi trong quá trình cấu hình hoặc kết nối tài nguyên đám mây.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Error Message Panel -->
+    @if (!Model.IsSuccess && !string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="dashboard-card border-danger">
+                    <div class="card-header-custom">
+                        <h5 class="card-title-custom text-danger">
+                            <i class="bi bi-bug-fill"></i> Chi Tiết Lỗi & Hướng Dẫn Khắc Phục
+                        </h5>
+                    </div>
+                    <div class="alert alert-danger font-monospace text-xs mb-3">
+                        @Model.ErrorMessage
+                    </div>
+                    <div class="text-muted small">
+                        <strong>Cách khắc phục gợi ý:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>Kiểm tra xem Docker và LocalStack Container đã được bật hay chưa (mặc định chạy tại endpoint <code class="text-danger">http://localhost:4566</code>).</li>
+                            <li>Đảm bảo bạn đã chạy lệnh <code class="font-semibold text-danger">terraform apply</code> trong thư mục chứa mã nguồn Terraform của đề tài để khởi tạo các tài nguyên AWS (S3, DynamoDB, Lambda).</li>
+                            <li>Xác minh tên của tài nguyên trong file cấu hình <code class="font-semibold">appsettings.json</code> khớp chính xác với các tài nguyên do Terraform khai báo.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Main Results Information Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Key Metadata Card -->
+        <div class="col-lg-6">
+            <div class="dashboard-card h-100">
+                <div class="card-header-custom border-bottom pb-2">
+                    <h5 class="card-title-custom text-indigo">
+                        <i class="bi bi-info-circle-fill"></i> Thông Tin Di Trú
+                    </h5>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Metadata</span>
+                </div>
+                
+                <div class="pt-3">
+                    <table class="table table-borderless align-middle mb-0 text-sm">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted py-2 w-40">Mã di trú (ID):</td>
+                                <td class="font-monospace text-dark font-semibold py-2">@Model.MigrationId</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2">Trạng thái:</td>
+                                <td class="py-2">
+                                    @if (Model.IsSuccess)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success"><i class="bi bi-cloud-check-fill me-1"></i> COMPLETED</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger bg-opacity-10 text-danger"><i class="bi bi-x-circle-fill me-1"></i> FAILED</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2">Tên file backup:</td>
+                                <td class="font-monospace text-secondary text-xs py-2">@Model.BackupFileName</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2">S3 Bucket Name:</td>
+                                <td class="text-dark font-semibold py-2">@Model.S3BucketName</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2">S3 Object Key:</td>
+                                <td class="font-monospace text-secondary text-xs py-2">@Model.S3ObjectKey</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lambda Self-Test Response Card -->
+        <div class="col-lg-6">
+            <div class="dashboard-card h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="card-header-custom border-bottom pb-2">
+                        <h5 class="card-title-custom text-danger">
+                            <i class="bi bi-cpu-fill"></i> Lambda Self-Test Response
+                        </h5>
+                        @if (Model.IsSuccess)
+                        {
+                            <span class="badge bg-success bg-opacity-10 text-success">PASSED</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary">NOT RUN / ERROR</span>
+                        }
+                    </div>
+                    
+                    <div class="pt-3">
+                        <p class="text-muted text-xs">Phản hồi thô trả về từ Lambda function:</p>
+                        <div class="bg-dark text-white rounded-3 p-3 font-monospace text-xs" style="max-height: 180px; overflow-y: auto;">
+                            @if (!string.IsNullOrEmpty(Model.LambdaSelfTestResponse))
+                            {
+                                <pre class="mb-0 text-success" style="white-space: pre-wrap;">@Model.LambdaSelfTestResponse</pre>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Không có phản hồi từ Lambda hoặc tự kiểm tra bị lỗi.</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-3 text-xs text-muted">
+                    <i class="bi bi-shield-check text-success me-1"></i> Tự động kích hoạt thông qua SDK AWS Lambda của .NET.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Logs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header-custom">
+                    <h5 class="card-title-custom text-primary">
+                        <i class="bi bi-list-task"></i> Tiến Trình Chi Tiết (SDK Logs)
+                    </h5>
+                    <span class="badge bg-primary bg-opacity-10 text-primary">Total Logs: @Model.Logs.Count</span>
+                </div>
+                
+                <div class="console-box mt-3" style="max-height: 350px;">
+                    @if (Model.Logs.Any())
+                    {
+                        @foreach (var log in Model.Logs)
+                        {
+                            <div class="console-line">
+                                <span class="text-muted">[@log.Timestamp]</span>
+                                @if (log.Status == "STARTED" || log.Status == "SELF_TEST_TRIGGERED")
+                                {
+                                    <span class="c-info">[INFO]</span>
+                                }
+                                else if (log.Status == "BACKUP_CREATED" || log.Status == "UPLOADED_TO_S3" || log.Status == "SELF_TEST_PASSED")
+                                {
+                                    <span class="c-success">[SUCCESS]</span>
+                                }
+                                else
+                                {
+                                    <span class="c-warning">[@log.Status]</span>
+                                }
+                                <span class="text-white"> @log.Message</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted text-xs">Không có dữ liệu log ghi nhận từ ứng dụng.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row">
+        <div class="col-12 text-center">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary px-4 py-2" style="border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-arrow-left me-2"></i> Quay lại Dashboard
+            </a>
+        </div>
+    </div>
+</div>

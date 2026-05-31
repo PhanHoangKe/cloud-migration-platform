@@ -113,9 +113,11 @@
                     <h5 class="card-title-custom">
                         <i class="bi bi-play-circle text-primary"></i> Migration Center
                     </h5>
-                    <button class="btn btn-primary btn-start-migration" id="btnStartMigration">
-                        <i class="bi bi-rocket-takeoff me-2"></i> Start Migration
-                    </button>
+                    <form asp-controller="Migration" asp-action="Start" method="post" id="migrationForm">
+                        <button type="submit" class="btn btn-primary btn-start-migration" id="btnStartMigration">
+                            <i class="bi bi-rocket-takeoff me-2"></i> Start Migration
+                        </button>
+                    </form>
                 </div>
                 
                 <!-- Progress Bar -->
@@ -490,174 +492,28 @@
                 healthCircle.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #334155 ${deg}deg)`;
             }
 
-            // Animation helper
-            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-            btnStart.addEventListener("click", async function () {
-                // 1. Prepare UI
-                btnStart.disabled = true;
-                btnStart.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i> Migrating...`;
-                progressContainer.classList.remove("d-none");
-                
-                // Reset all states
-                consoleBox.innerHTML = "";
-                progressBar.style.width = "0%";
-                updateHealthScore(35, "On-Premise", "Hạ tầng tại local chưa chuyển đổi.", "#ef4444");
-
-                // Reset timeline items
-                [step1, step2, step3, step4].forEach(step => {
-                    step.className = "timeline-item";
-                    step.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-${step.id.replace('timeStep', '')}-circle-fill"></i>`;
+            // Form Submit Listener to trigger loading states
+            const migrationForm = document.getElementById("migrationForm");
+            if (migrationForm) {
+                migrationForm.addEventListener("submit", function (e) {
+                    // Update button content
+                    btnStart.disabled = true;
+                    btnStart.innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i> Migrating...`;
+                    btnStart.classList.remove("btn-primary");
+                    btnStart.classList.add("btn-warning");
+                    
+                    // Show progress bar container and animate to mid point
+                    progressContainer.classList.remove("d-none");
+                    progressBar.style.width = "45%";
+                    
+                    // Print initial logs into CLI console
+                    consoleBox.innerHTML = "";
+                    logToConsole("Initializing backend connection to LocalStack (localhost:4566)...", "info");
+                    logToConsole("Generating unique Migration ID...", "info");
+                    logToConsole("Provisioning AWS S3 & DynamoDB endpoints using AWS .NET SDK...", "tf");
+                    logToConsole("Executing academic migration workflow...", "info");
                 });
-
-                // Reset Stat Cards
-                valS3.textContent = "Offline";
-                badgeS3.className = "badge bg-secondary bg-opacity-10 text-secondary";
-                badgeS3.textContent = "Pending";
-                
-                valDynamo.textContent = "Offline";
-                badgeDynamo.className = "badge bg-secondary bg-opacity-10 text-secondary";
-                badgeDynamo.textContent = "Pending";
-
-                valLambda.textContent = "Offline";
-                badgeLambda.className = "badge bg-secondary bg-opacity-10 text-secondary";
-                badgeLambda.textContent = "Pending";
-
-                valCost.textContent = "$0.00/month";
-                costTotalBadge.textContent = "$0.00/Month";
-
-                await sleep(500);
-
-                // --- START SIMULATION ---
-                logToConsole("Initializing Cloud Migration Pipeline...", "info");
-                logToConsole("Checking Terraform CLI compatibility... Found Terraform v1.8.0", "tf");
-                logToConsole("Checking LocalStack Edge connectivity on port 4566... Success", "info");
-                progressBar.style.width = "5%";
-                
-                await sleep(1000);
-
-                // STEP 1: SQL Server Backup Export
-                step1.classList.add("active");
-                step1.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
-                logToConsole("Initiating Step 1: SQL Server database backup export...", "info");
-                logToConsole("Connecting to SQL Server Instance [localhost:1433]...", "info");
-                await sleep(1000);
-                logToConsole("Executing command: BACKUP DATABASE [MigrationDb] TO DISK = 'd:\\backup\\migration_db_backup.bak' WITH FORMAT, INIT;", "info");
-                await sleep(1200);
-                logToConsole("Database backup successful. File size: 48.2 MB.", "success");
-                
-                // Complete Step 1
-                step1.classList.remove("active");
-                step1.classList.add("success");
-                step1.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
-                progressBar.style.width = "25%";
-                updateHealthScore(50, "Exporting", "Đã export xong dữ liệu On-premise.", "#f59e0b");
-
-                await sleep(1000);
-
-                // STEP 2: Upload backup to S3
-                step2.classList.add("active");
-                step2.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
-                logToConsole("Initiating Step 2: Resource creation and S3 upload...", "info");
-                logToConsole("Terraform apply: initializing aws_s3_bucket.backup_bucket", "tf");
-                await sleep(800);
-                logToConsole("aws_s3_bucket.backup_bucket: Creating...", "tf");
-                await sleep(1000);
-                logToConsole("aws_s3_bucket.backup_bucket: Creation complete [id=cloud-migration-backup-kedep]", "tf");
-                logToConsole("Uploading 'migration_db_backup.bak' to s3://cloud-migration-backup-kedep...", "info");
-                await sleep(1200);
-                logToConsole("File uploaded successfully. ETag: 'c52cf4df8b64e528574d2847a9893d56'", "success");
-
-                // Update S3 Stat Card
-                valS3.textContent = "Active";
-                badgeS3.className = "badge bg-success bg-opacity-10 text-success";
-                badgeS3.textContent = "Active";
-                statIconS3.className = "stat-icon success";
-
-                // Complete Step 2
-                step2.classList.remove("active");
-                step2.classList.add("success");
-                step2.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
-                progressBar.style.width = "50%";
-                updateHealthScore(65, "S3 Uploaded", "Đã lưu trữ an toàn bản sao dữ liệu trên Cloud.", "#3b82f6");
-
-                await sleep(1000);
-
-                // STEP 3: DynamoDB migration logs
-                step3.classList.add("active");
-                step3.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
-                logToConsole("Initiating Step 3: DynamoDB provisioning & logging...", "info");
-                logToConsole("Terraform apply: initializing aws_dynamodb_table.migration_logs", "tf");
-                await sleep(800);
-                logToConsole("aws_dynamodb_table.migration_logs: Creating...", "tf");
-                await sleep(1000);
-                logToConsole("aws_dynamodb_table.migration_logs: Creation complete [id=cloud-migration-logs-kedep]", "tf");
-                logToConsole("Writing event logs to DynamoDB table 'cloud-migration-logs-kedep'...", "info");
-                logToConsole("JSON Log: { 'MigrationID': 'MIG-992A', 'Source': 'On-Premise', 'Dest': 'S3-Bucket', 'Status': 'Success' }", "info");
-                await sleep(1000);
-                logToConsole("Log entry successfully appended.", "success");
-
-                // Update DynamoDB Stat Card
-                valDynamo.textContent = "Ready";
-                badgeDynamo.className = "badge bg-success bg-opacity-10 text-success";
-                badgeDynamo.textContent = "Ready";
-                statIconDynamo.className = "stat-icon success";
-
-                // Complete Step 3
-                step3.classList.remove("active");
-                step3.classList.add("success");
-                step3.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
-                progressBar.style.width = "75%";
-                updateHealthScore(80, "Logs Saved", "Nhật ký chuyển đổi đã được ghi vào NoSQL.", "#6366f1");
-
-                await sleep(1000);
-
-                // STEP 4: Lambda self test
-                step4.classList.add("active");
-                step4.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-arrow-repeat spin d-inline-block"></i>`;
-                logToConsole("Initiating Step 4: Provisioning Lambda self-test...", "info");
-                logToConsole("Terraform apply: initializing aws_lambda_function.self_test", "tf");
-                await sleep(800);
-                logToConsole("aws_lambda_function.self_test: Creating...", "tf");
-                await sleep(1000);
-                logToConsole("aws_lambda_function.self_test: Creation complete [id=cloud-migration-self-test-kedep]", "tf");
-                logToConsole("Invoking Lambda self-test trigger...", "info");
-                await sleep(800);
-                logToConsole("Lambda invocation started.", "info");
-                logToConsole("Reading S3 backup payload headers... OK", "lambda");
-                logToConsole("Checking LocalStack endpoints communication... OK", "lambda");
-                logToConsole("Validating DynamoDB migration entries... OK", "lambda");
-                await sleep(1200);
-                logToConsole("Lambda function executed. Execution time: 82ms. Memory: 128MB. Status code: 200.", "success");
-                logToConsole("Self-test output: 'ALL MIGRATION SYSTEMS OPERATIONAL - CHECKS PASSED'", "success");
-
-                // Update Lambda Stat Card
-                valLambda.textContent = "Passed";
-                badgeLambda.className = "badge bg-success bg-opacity-10 text-success";
-                badgeLambda.textContent = "Passed";
-                statIconLambda.className = "stat-icon success";
-
-                // Complete Step 4
-                step4.classList.remove("active");
-                step4.classList.add("success");
-                step4.querySelector(".timeline-badge").innerHTML = `<i class="bi bi-check-lg"></i>`;
-                progressBar.style.width = "100%";
-
-                // Update final cost card values
-                valCost.textContent = "$0.30/month";
-                costTotalBadge.textContent = "$0.30/Month";
-
-                await sleep(500);
-
-                // --- FINISH ---
-                logToConsole("Infrastructure cloud conversion finished successfully!", "success");
-                logToConsole("All systems running on LocalStack AWS simulator via Terraform IaC.", "success");
-                
-                updateHealthScore(92, "Cloud-Native", "Chuyển đổi thành công. Trạng thái: Tối ưu.", "#10b981");
-
-                btnStart.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> Migration Success`;
-                btnStart.className = "btn btn-success btn-start-migration";
-            });
+            }
         });
     </script>
 }
