@@ -1,0 +1,37 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Visual Studio
+.vscode/
+.idea/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# LocalStack / Docker data
+localstack_data/
+.localstack/
+volume/
+
+# Environment / secrets
+.env
+appsettings.Development.json
+*.key
+*.pem
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
