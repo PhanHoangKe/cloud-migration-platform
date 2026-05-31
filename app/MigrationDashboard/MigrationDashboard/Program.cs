@@ -10,6 +10,7 @@ builder.Services.AddScoped<IPreMigrationAssessmentService, PreMigrationAssessmen
 builder.Services.AddScoped<IMigrationPackageService, MigrationPackageService>();
 builder.Services.AddScoped<IMigrationReportService, MigrationReportService>();
 builder.Services.AddScoped<IRestoreSimulationService, RestoreSimulationService>();
+builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,77 @@
+﻿{
+  "restoreId": "RESTORE_20260531_111528",
+  "migrationId": "MIGRATION_20260531_111432",
+  "restoredAt": "2026-05-31T11:15:28.504Z",
+  "sourceBucket": "cloud-migration-backup-kedep",
+  "restoredFiles": [
+    {
+      "fileName": "assessment-report.json",
+      "s3Key": "migrations/MIGRATION_20260531_111432/assessment-report.json",
+      "existsOnS3": true,
+      "downloadedLocally": true,
+      "localPath": "/restore-simulations/MIGRATION_20260531_111432/assessment-report.json",
+      "size": 2559
+    },
+    {
+      "fileName": "migration-manifest.json",
+      "s3Key": "migrations/MIGRATION_20260531_111432/migration-manifest.json",
+      "existsOnS3": true,
+      "downloadedLocally": true,
+      "localPath": "/restore-simulations/MIGRATION_20260531_111432/migration-manifest.json",
+      "size": 590
+    },
+    {
+      "fileName": "source-package.zip",
+      "s3Key": "migrations/MIGRATION_20260531_111432/source-package.zip",
+      "existsOnS3": true,
+      "downloadedLocally": false,
+      "localPath": "",
+      "size": 82464482
+    },
+    {
+      "fileName": "migration-report.json",
+      "s3Key": "migrations/MIGRATION_20260531_111432/migration-report.json",
+      "existsOnS3": true,
+      "downloadedLocally": true,
+      "localPath": "/restore-simulations/MIGRATION_20260531_111432/migration-report.json",
+      "size": 1569
+    },
+    {
+      "fileName": "migration-report.html",
+      "s3Key": "migrations/MIGRATION_20260531_111432/migration-report.html",
+      "existsOnS3": true,
+      "downloadedLocally": true,
+      "localPath": "/restore-simulations/MIGRATION_20260531_111432/migration-report.html",
+      "size": 8289
+    }
+  ],
+  "validationResults": [
+    {
+      "checkName": "Kiểm tra tệp assessment-report.json",
+      "status": "PASSED",
+      "description": "Tệp tin tồn tại trên S3, kích thước: 2.5 KB."
+    },
+    {
+      "checkName": "Kiểm tra tệp migration-manifest.json",
+      "status": "PASSED",
+      "description": "Tệp tin tồn tại trên S3, kích thước: 0.6 KB."
+    },
+    {
+      "checkName": "Kiểm tra tệp source-package.zip",
+      "status": "PASSED",
+      "description": "Tệp tin tồn tại trên S3, kích thước: 78.64 MB."
+    },
+    {
+      "checkName": "Kiểm tra tệp migration-report.json",
+      "status": "PASSED",
+      "description": "Tệp tin tồn tại trên S3, kích thước: 1.5 KB."
+    },
+    {
+      "checkName": "Kiểm tra tệp migration-report.html",
+      "status": "PASSED",
+      "description": "Tệp tin tồn tại trên S3, kích thước: 8.1 KB."
+    }
+  ],
+  "restoreStatus": "COMPLETED",
+  "note": "Disaster recovery simulation only, no production data was overwritten."
+}
