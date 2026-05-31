@@ -1,0 +1,14 @@
+﻿{
+  "MigrationId": {
+    "S": "MIGRATION_TEST_001"
+  },
+  "Status": {
+    "S": "STARTED"
+  },
+  "Step": {
+    "S": "TEST_DYNAMODB"
+  },
+  "Message": {
+    "S": "DynamoDB migration log test successful"
+  }
+}

@@ -21,3 +21,7 @@ output "private_subnet_id" {
 output "migration_backup_bucket_name" {
   value = aws_s3_bucket.migration_backup.bucket
 }
+
+output "migration_logs_table_name" {
+  value = aws_dynamodb_table.migration_logs.name
+}
