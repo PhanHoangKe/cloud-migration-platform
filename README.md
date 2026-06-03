@@ -153,45 +153,9 @@ Sau khi kết thúc buổi báo cáo hoặc demo, chạy lệnh sau để giải
 ```powershell
 .\scripts\05-terraform-destroy.ps1
 ```
-
 ---
 
-## 🎬 7. Kịch bản Video Demo đề xuất
-
-Để tạo video báo cáo đồ án từ 3-5 phút ấn tượng nhất, bạn có thể thực hiện theo các phân cảnh sau:
-
-1. **Phân cảnh 1 (0:00 - 0:45) - Giới thiệu môi trường**:
-   * Show cấu trúc thư mục của dự án trên VS Code.
-   * Mở terminal chạy `.\scripts\01-start-localstack.ps1` để show Docker khởi động.
-   * Mở Docker Desktop hiển thị container LocalStack đang chạy trên cổng `4566`.
-2. **Phân cảnh 2 (0:45 - 1:30) - Triển khai hạ tầng IaC**:
-   * Chạy kịch bản `.\scripts\02-terraform-apply.ps1`.
-   * Quay cận cảnh tiến trình Terraform tạo VPC, Bucket, Table và Function thành công.
-   * Chạy `.\scripts\03-check-cloud-resources.ps1` để show output kiểm tra của AWS CLI.
-3. **Phân cảnh 3 (1:30 - 3:00) - Tương tác trên Dashboard**:
-   * Chạy `.\scripts\04-run-dashboard.ps1`, truy cập trình duyệt `http://localhost:5097`.
-   * Show giao diện Dashboard hiện đại (Dark sidebar, Health Score lúc này là **50/100** trạng thái **Warning** do chưa có backup và chưa chạy Lambda self-test).
-   * Bấm nút **Start Migration**: Trang kết quả hiển thị quy trình:
-     * Export database EduFlex từ On-premise thành JSON.
-     * Upload lên S3.
-     * Ghi nhận log vào DynamoDB.
-     * Kích hoạt Lambda self-test thành công (`SELF_TEST_PASSED`).
-   * Quay lại Dashboard chính:
-     * Health Score tăng lên **100/100 (Healthy)**.
-     * Biểu đồ **Cost Estimation** cập nhật chi phí **$0.30/Month**.
-     * Bảng **Recent S3 Backups** và **Recent Migration Logs** hiển thị đầy đủ dữ liệu thực tế đọc từ LocalStack.
-4. **Phân cảnh 4 (3:00 - 3:45) - Giả lập Rollback & So sánh**:
-   * Bấm nút **Rollback Simulation**.
-   * Show thông báo TempData xanh lá thành công.
-   * Kiểm tra bảng console thấy log mới: `ROLLBACK_STARTED` và `ROLLBACK_COMPLETED`.
-   * Show bảng so sánh kiến trúc **Before / After Comparison** ở chân trang và giải thích.
-5. **Phân cảnh 5 (3:45 - Kết thúc) - Hủy hạ tầng**:
-   * Quay lại terminal, chạy `.\scripts\05-terraform-destroy.ps1`.
-   * Minh chứng tài nguyên đã biến mất sạch sẽ trên LocalStack. Kết thúc demo.
-
----
-
-## ✨ 8. Các điểm sáng tạo và kỹ thuật nổi bật
+## ✨ 7. Các điểm sáng tạo và kỹ thuật nổi bật
 
 * **Migration Dashboard Thực tế**: Không dùng dữ liệu tĩnh giả (mock database), toàn bộ file backup, log, và trạng thái Lambda đều được đọc/ghi trực tiếp tới LocalStack bằng SDK thật.
 * **Migration Health Score Động**: Điểm số được tính toán dựa trên mức độ hoàn thiện của hệ thống:
@@ -205,21 +169,7 @@ Sau khi kết thúc buổi báo cáo hoặc demo, chạy lệnh sau để giải
 
 ---
 
-## 👥 9. Thành viên nhóm triển khai
-
-* **Phan Hoàng Kế** - *Nhóm trưởng*: Thiết kế kiến trúc tổng thể, lập trình cấu hình Terraform IaC, phát triển Backend ASP.NET Core, kết nối AWS SDK và điều phối demo.
-* **Thành viên 2** - *Giao diện & Kiểm thử*: Thiết kế UI/UX Dashboard hiện đại, cấu hình CSS/Bootstrap 5, tích hợp Chart.js và thực hiện kiểm thử kết nối LocalStack.
-* **Thành viên 3** - *Tài liệu & Video*: Viết báo cáo đồ án, thiết kế slide thuyết trình, quay và dựng video demo, quản lý tài liệu hướng dẫn.
-
----
-
-## 📝 10. Ghi chú học thuật
+## 📝 8. Ghi chú học thuật
 
 * **Bản quyền mô phỏng**: Hệ thống sử dụng **LocalStack Community Edition** chạy cục bộ để thực hiện mô phỏng. Toàn bộ API hoạt động offline và không yêu cầu bất kỳ tài khoản AWS trả phí hay kết nối Internet nào.
 * **Cảnh báo chi phí**: Bảng ước tính chi phí và hóa đơn phân rã chỉ mang tính chất minh họa học thuật phù hợp với yêu cầu mô phỏng của đề tài, không phản ánh chính xác bảng giá dịch vụ thực tế của AWS Web Services tại từng thời điểm.
-
----
-
-## 📄 11. Giấy phép sử dụng
-
-Dự án này được phát hành dưới giấy phép sử dụng học thuật. Vui lòng trích dẫn đầy đủ tên nhóm thực hiện khi sử dụng tài nguyên này cho các mục đích nghiên cứu, học tập hoặc giảng dạy tại trường đại học.
