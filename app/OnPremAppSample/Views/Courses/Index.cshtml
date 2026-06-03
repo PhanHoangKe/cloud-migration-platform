@@ -1,0 +1,65 @@
+@model IEnumerable<OnPremAppSample.Models.Course>
+
+@{
+    ViewData["Title"] = "Danh Sách Khóa Học";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1 text-indigo">📚 Danh Sách Khóa Học</h2>
+        <p class="text-muted">Các khóa học hiện tại đang lưu trữ và quản lý trong cơ sở dữ liệu mô phỏng.</p>
+    </div>
+    <span class="badge bg-secondary py-2 px-3 rounded-pill">Tổng số: @Model.Count()</span>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    @foreach (var course in Model)
+    {
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden transition-all hover-translate">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">@course.Category</span>
+                        
+                        @{
+                            var badgeClass = course.Difficulty switch
+                            {
+                                "Beginner" => "bg-success-subtle text-success border-success-subtle",
+                                "Intermediate" => "bg-warning-subtle text-warning border-warning-subtle",
+                                "Advanced" => "bg-danger-subtle text-danger border-danger-subtle",
+                                _ => "bg-secondary-subtle text-secondary border-secondary-subtle"
+                            };
+                        }
+                        <span class="badge @badgeClass border rounded-pill px-3 py-1">@course.Difficulty</span>
+                    </div>
+
+                    <h4 class="card-title mt-2 fw-bold">@course.Title</h4>
+                    <p class="card-text text-muted flex-grow-1" style="font-size: 0.925rem; line-height: 1.5;">@course.Description</p>
+                    
+                    <hr class="text-black-50 my-3">
+
+                    <div class="row g-2 mb-3 align-items-center">
+                        <div class="col-6" style="font-size: 0.875rem;">
+                            <strong>👨‍🏫 Giảng viên:</strong> @course.Instructor
+                        </div>
+                        <div class="col-6 text-end" style="font-size: 0.875rem;">
+                            <strong>⏱️ Thời lượng:</strong> @course.Duration
+                        </div>
+                        <div class="col-6" style="font-size: 0.875rem;">
+                            <strong>💵 Giá:</strong> <span class="text-success fw-bold">$@course.Price</span>
+                        </div>
+                        <div class="col-6 text-end" style="font-size: 0.85rem;">
+                            <strong>📁 Ảnh bìa:</strong> <code class="text-truncate d-inline-block style-code-path" style="max-width: 120px;" title="@course.ImagePath">@course.ImagePath.Split('/').Last()</code>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-auto">
+                        <a asp-action="Details" asp-route-id="@course.Id" class="btn btn-indigo text-white fw-bold d-flex align-items-center justify-content-center" style="background-color: #4f46e5;">
+                            Xem chi tiết khóa học <span class="ms-2">➔</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

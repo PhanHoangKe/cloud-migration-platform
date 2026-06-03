@@ -59,10 +59,10 @@
 <section id="dashboard" class="mb-4">
     <div class="row g-4">
         <!-- Hero Card -->
-        <div class="col-lg-6 col-md-12">
+        <div class="col-xl-6 col-lg-12">
             <div class="hero-card h-100 d-flex flex-column justify-content-between">
                 <div class="hero-content">
-                    <span class="badge bg-primary bg-opacity-25 text-primary-light mb-3 px-3 py-2 rounded-pill border border-primary border-opacity-50">
+                    <span class="badge bg-primary bg-opacity-25 text-primary mb-3 px-3 py-2 rounded-pill border border-primary border-opacity-50" style="font-weight: 700;">
                         <i class="bi bi-award-fill me-1"></i> Đồ án Điện toán đám mây
                     </span>
                     <h2 class="hero-title">Cloud Migration & Modernization Platform</h2>
@@ -79,36 +79,36 @@
             </div>
         </div>
         <!-- Assessment Summary Card -->
-        <div class="col-lg-3 col-md-6">
+        <div class="col-xl-2 col-lg-4 col-md-6">
             <div class="dashboard-card text-center d-flex flex-column align-items-center justify-content-between h-100">
                 <div>
-                    <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2" style="font-size: 12px; letter-spacing: 1px;">ĐÁNH GIÁ NGUỒN</h6>
+                    <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2" style="font-size: 11px; letter-spacing: 1px;">ĐÁNH GIÁ NGUỒN</h6>
                     
                     <!-- Score Badge -->
                     <div class="mb-3">
                         @if (Model.Assessment.ReadinessScore >= 80)
                         {
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-shield-check me-1"></i> Sẵn sàng</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-shield-check me-1"></i> Sẵn sàng</span>
                         }
                         else if (Model.Assessment.ReadinessScore >= 50)
                         {
-                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-exclamation-triangle me-1"></i> Cần cấu thiện</span>
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-exclamation-triangle me-1"></i> Cần cải thiện</span>
                         }
                         else
                         {
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-x-circle me-1"></i> Chưa đạt</span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-x-circle me-1"></i> Chưa đạt</span>
                         }
                     </div>
 
-                    <div class="health-score-container mb-3" style="display: flex; justify-content: center; align-items: center;">
+                    <div class="health-score-container mb-3">
                         @{
                             string assessColor = Model.Assessment.ReadinessScore >= 80 ? "#10b981" : (Model.Assessment.ReadinessScore >= 50 ? "#f59e0b" : "#ef4444");
                             double assessDegrees = Model.Assessment.ReadinessScore * 3.6;
                         }
-                        <div class="health-circle-outer" style="background: conic-gradient(@assessColor 0deg, @assessColor @(assessDegrees)deg, #e2e8f0 @(assessDegrees)deg); width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
-                            <div class="health-circle-inner" style="background-color: #fff; width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%;">
-                                <span class="health-value text-xl font-bold text-dark" style="font-size: 20px; line-height: 1;">@Model.Assessment.ReadinessScore%</span>
-                                <span class="health-label text-xxs tracking-wider mt-1 text-muted" style="font-size: 8px;">Readiness</span>
+                        <div class="health-circle-outer" style="background: conic-gradient(@assessColor 0deg, @assessColor @(assessDegrees)deg, #e2e8f0 @(assessDegrees)deg);">
+                            <div class="health-circle-inner">
+                                <span class="health-value">@Model.Assessment.ReadinessScore%</span>
+                                <span class="health-label">Readiness</span>
                             </div>
                         </div>
                     </div>
@@ -120,7 +120,7 @@
                         </div>
                         <div class="d-flex justify-content-between" style="font-size: 11px;">
                             <span class="text-muted">Chiến lược:</span>
-                            <span class="badge bg-indigo bg-opacity-10 text-indigo py-0.5 px-1.5 ms-2" style="font-size: 10px;">@Model.Assessment.RecommendedMigrationStrategy</span>
+                            <span class="badge bg-indigo bg-opacity-10 text-indigo py-0.5 px-1.5 ms-2" style="font-size: 10px; font-weight: 600;">@Model.Assessment.RecommendedMigrationStrategy</span>
                         </div>
                     </div>
                 </div>
@@ -132,24 +132,78 @@
                 </div>
             </div>
         </div>
+        <!-- Cloud Health Summary Card -->
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="dashboard-card text-center d-flex flex-column align-items-center justify-content-between h-100">
+                <div>
+                    <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2" style="font-size: 11px; letter-spacing: 1px;">SỨC KHỎE MÔI TRƯỜNG</h6>
+                    
+                    <!-- Status Badge -->
+                    <div class="mb-3">
+                        @if (Model.CloudHealthStatus == "Healthy")
+                        {
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-shield-check me-1"></i> Sẵn sàng</span>
+                        }
+                        else if (Model.CloudHealthStatus == "Warning")
+                        {
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-exclamation-triangle me-1"></i> Lưu ý</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-x-circle me-1"></i> Ngoại tuyến</span>
+                        }
+                    </div>
+
+                    <div class="health-score-container mb-3">
+                        @{
+                            string cloudHealthColor = Model.CloudHealthStatus == "Healthy" ? "#10b981" : (Model.CloudHealthStatus == "Warning" ? "#f59e0b" : "#ef4444");
+                            double cloudHealthDegrees = Model.CloudHealthScore * 3.6;
+                        }
+                        <div class="health-circle-outer" style="background: conic-gradient(@cloudHealthColor 0deg, @cloudHealthColor @(cloudHealthDegrees)deg, #e2e8f0 @(cloudHealthDegrees)deg);">
+                            <div class="health-circle-inner">
+                                <span class="health-value">@Model.CloudHealthScore%</span>
+                                <span class="health-label">Cloud Health</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-start px-2 mt-2">
+                        <div class="d-flex justify-content-between mb-1" style="font-size: 11px;">
+                            <span class="text-muted">Gateway:</span>
+                            <span class="font-semibold text-dark">LocalStack</span>
+                        </div>
+                        <div class="d-flex justify-content-between" style="font-size: 11px;">
+                            <span class="text-muted">Cổng:</span>
+                            <span class="badge bg-light text-secondary py-0.5 px-1.5 ms-2 border" style="font-size: 10px; font-weight: 600;">4566</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-100 px-2 mt-3">
+                    <a href="/CloudResources/Health" class="btn btn-outline-primary btn-sm w-100" style="border-radius: 8px; font-weight: 600; font-size: 12px; padding: 6px 12px;">
+                        <i class="bi bi-heart-pulse me-1"></i> Kiểm tra chi tiết
+                    </a>
+                </div>
+            </div>
+        </div>
         <!-- Health Score Card -->
-        <div class="col-lg-3 col-md-6">
+        <div class="col-xl-2 col-lg-4 col-md-6">
             <div class="dashboard-card text-center d-flex flex-column align-items-center justify-content-center h-100">
-                <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2" style="font-size: 12px; letter-spacing: 1px;">SỨC KHỎE CHUYỂN ĐỔI</h6>
+                <h6 class="text-uppercase tracking-wider text-muted font-semibold mb-2" style="font-size: 11px; letter-spacing: 1px;">SỨC KHỎE CHUYỂN ĐỔI</h6>
                 
                 <!-- Status Badge -->
                 <div class="mb-3">
                     @if (Model.MigrationHealthScore >= 75)
                     {
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-shield-check me-1"></i> Ổn định</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-shield-check me-1"></i> Ổn định</span>
                     }
                     else if (Model.MigrationHealthScore >= 50)
                     {
-                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-exclamation-triangle me-1"></i> Cảnh báo</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-exclamation-triangle me-1"></i> Cảnh báo</span>
                     }
                     else
                     {
-                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill"><i class="bi bi-x-octagon me-1"></i> Nguy cấp</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;"><i class="bi bi-x-octagon me-1"></i> Nguy cấp</span>
                     }
                 </div>
 
@@ -160,9 +214,9 @@
                         string healthLabel = Model.MigrationHealthScore >= 75 ? "Đám mây" : (Model.MigrationHealthScore >= 50 ? "Môi trường Lai" : "Nội bộ");
                     }
                     <div class="health-circle-outer" id="healthScoreCircle" style="background: conic-gradient(@healthColor 0deg, @healthColor @(healthDegrees)deg, #e2e8f0 @(healthDegrees)deg);">
-                        <div class="health-circle-inner" style="background-color: #fff;">
-                            <span class="health-value text-xl font-bold text-dark" id="healthScoreValue" style="font-size: 26px;">@Model.MigrationHealthScore/100</span>
-                            <span class="health-label text-xxs tracking-wider mt-1 text-muted" id="healthScoreLabel" style="font-size: 10px;">@healthLabel</span>
+                        <div class="health-circle-inner">
+                            <span class="health-value" id="healthScoreValue">@Model.MigrationHealthScore/100</span>
+                            <span class="health-label" id="healthScoreLabel">@healthLabel</span>
                         </div>
                     </div>
                 </div>
@@ -229,7 +283,7 @@
                     <div class="stat-icon @s3IconClass" id="statIconS3">
                         <i class="bi bi-folder-symlink"></i>
                     </div>
-                    <span class="badge bg-@s3BadgeClass bg-opacity-10 text-@s3BadgeClass" id="badgeS3">@s3BadgeText</span>
+                    <span class="status-badge @s3BadgeClass" id="badgeS3">@s3BadgeText</span>
                 </div>
                 <h6 class="stat-label">Backup trên S3</h6>
                 <h4 class="stat-value" id="valS3">@s3ValueText</h4>
@@ -248,7 +302,7 @@
                     <div class="stat-icon @dbIconClass" id="statIconDynamo">
                         <i class="bi bi-journal-text"></i>
                     </div>
-                    <span class="badge bg-@dbBadgeClass bg-opacity-10 text-@dbBadgeClass" id="badgeDynamo">@dbBadgeText</span>
+                    <span class="status-badge @dbBadgeClass" id="badgeDynamo">@dbBadgeText</span>
                 </div>
                 <h6 class="stat-label">Nhật ký DynamoDB</h6>
                 <h4 class="stat-value" id="valDynamo">@dbValueText</h4>
@@ -260,17 +314,17 @@
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     @{
                         string lambdaBadgeText = "Chưa chạy";
-                        string lambdaBadgeClass = "secondary";
+                        string lambdaBadgeClass = "neutral";
                         if (Model.LatestSelfTestStatus == "Passed") { lambdaBadgeText = "Đạt"; lambdaBadgeClass = "success"; }
                         else if (Model.LatestSelfTestStatus == "Failed") { lambdaBadgeText = "Lỗi"; lambdaBadgeClass = "danger"; }
                         else if (Model.LatestSelfTestStatus == "Running") { lambdaBadgeText = "Đang chạy"; lambdaBadgeClass = "info"; }
                         
-                        string lambdaIconClass = lambdaBadgeClass;
+                        string lambdaIconClass = lambdaBadgeClass == "neutral" ? "secondary" : lambdaBadgeClass;
                     }
                     <div class="stat-icon @lambdaIconClass" id="statIconLambda">
                         <i class="bi bi-lightning-charge"></i>
                     </div>
-                    <span class="badge bg-@lambdaBadgeClass bg-opacity-10 text-@lambdaBadgeClass" id="badgeLambda">@lambdaBadgeText</span>
+                    <span class="status-badge @lambdaBadgeClass" id="badgeLambda">@lambdaBadgeText</span>
                 </div>
                 <h6 class="stat-label">Tự kiểm thử Lambda</h6>
                 <h4 class="stat-value" id="valLambda">@lambdaBadgeText</h4>
@@ -283,7 +337,7 @@
                     <div class="stat-icon success" id="statIconCost">
                         <i class="bi bi-cash-stack"></i>
                     </div>
-                    <span class="badge bg-success bg-opacity-10 text-success">Hoạt động</span>
+                    <span class="status-badge success">Hoạt động</span>
                 </div>
                 <h6 class="stat-label">Chi phí ước tính</h6>
                 <h4 class="stat-value" id="valCost">$@Model.EstimatedMonthlyCost.ToString("F2")/tháng</h4>
@@ -405,7 +459,7 @@
                 <h5 class="card-title-custom">
                     <i class="bi bi-hdd-network text-success"></i> Tài nguyên Cloud
                 </h5>
-                <span class="badge bg-success bg-opacity-10 text-success">LocalStack Endpoint</span>
+                <span class="status-badge success">LocalStack Endpoint</span>
             </div>
             
             <div class="resource-list mt-3">
@@ -522,7 +576,7 @@
                 <h5 class="card-title-custom text-warning">
                     <i class="bi bi-file-earmark-zip-fill"></i> Backup gần đây trên S3
                 </h5>
-                <span class="badge bg-warning bg-opacity-10 text-warning">@Model.BackupFilesCount tệp</span>
+                <span class="status-badge warning">@Model.BackupFilesCount tệp</span>
             </div>
             <div class="table-responsive mt-3" style="max-height: 280px; overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0 text-sm">
@@ -589,7 +643,7 @@
                                             <div class="text-truncate" style="max-width: 180px;" title="@backup.Key">@fileName</div>
                                             <span class="badge bg-@badgeColor bg-opacity-10 text-@badgeColor" style="font-size: 8px; padding: 2px 4px;">@fileTypeLabel</span>
                                         </div>
-                                        <div class="text-xxs text-muted font-monospace mt-0.5" style="font-size: 9px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@backup.Key">@backup.Key</div>
+                                        <div class="s3-path">@backup.Key</div>
                                     </td>
                                     <td>
                                         @if (backup.Size >= 1048576)
@@ -627,7 +681,7 @@
                 <h5 class="card-title-custom text-primary">
                     <i class="bi bi-database-fill"></i> Nhật ký chuyển đổi gần đây
                 </h5>
-                <span class="badge bg-primary bg-opacity-10 text-primary">@Model.MigrationLogsCount nhật ký</span>
+                <span class="status-badge info">@Model.MigrationLogsCount nhật ký</span>
             </div>
             <div class="table-responsive mt-3" style="max-height: 280px; overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0 text-sm">
@@ -696,10 +750,10 @@
                     <h5 class="card-title-custom">
                         <i class="bi bi-currency-dollar text-warning"></i> Ước tính chi phí
                     </h5>
-                    <span class="badge bg-warning bg-opacity-10 text-warning" id="costTotalBadge">$@Model.EstimatedMonthlyCost.ToString("F2") / tháng</span>
+                    <span class="status-badge warning" id="costTotalBadge">$@Model.EstimatedMonthlyCost.ToString("F2") / tháng</span>
                 </div>
                 
-                <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3" style="height: 260px;">
+                <div class="chart-container-custom d-flex align-items-center justify-content-center mt-3" style="height: 260px; position: relative;">
                     <canvas id="costChart"></canvas>
                 </div>
 
@@ -743,7 +797,7 @@
                 <h5 class="card-title-custom">
                     <i class="bi bi-diagram-3 text-info"></i> Kiến trúc hệ thống
                 </h5>
-                <span class="badge bg-info bg-opacity-10 text-info">Sơ đồ luồng</span>
+                <span class="status-badge info">Sơ đồ luồng</span>
             </div>
             
             <div class="architecture-flow mt-3">
@@ -835,7 +889,7 @@
                     <h5 class="card-title-custom text-indigo">
                         <i class="bi bi-arrow-left-right text-indigo me-2"></i> So sánh trước và sau chuyển đổi
                     </h5>
-                    <span class="badge bg-indigo bg-opacity-10 text-indigo">On-Premise vs. Cloud</span>
+                    <span class="badge bg-indigo bg-opacity-10 text-indigo" style="font-weight: 600;">On-Premise vs. Cloud</span>
                 </div>
                 
                 <div class="table-responsive mt-3">
@@ -898,9 +952,9 @@
                 datasets: [{
                     data: [s3Cost, dbCost, lambdaCost, otherCost],
                     backgroundColor: [
-                        '#6366f1', // Indigo S3
+                        '#2563eb', // Primary Blue S3
                         '#10b981', // Emerald DynamoDB
-                        '#ef4444', // Red Lambda
+                        '#f43f5e', // Rose Lambda
                         '#94a3b8'  // Gray Other
                     ],
                     borderWidth: 2,
@@ -921,7 +975,7 @@
                             labels: {
                                 font: {
                                     family: 'Plus Jakarta Sans',
-                                    size: 12
+                                    size: 11
                                 },
                                 padding: 15
                             }

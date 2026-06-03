@@ -21,6 +21,9 @@ builder.Services.AddScoped<IRestoreSimulationService, RestoreSimulationService>(
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<ISecurityComplianceService, SecurityComplianceService>();
 builder.Services.AddScoped<IDatabaseExportService, DatabaseExportService>();
+builder.Services.AddScoped<IMigrationProgressService, MigrationProgressService>();
+builder.Services.AddScoped<IMigrationHistoryService, MigrationHistoryService>();
+builder.Services.AddScoped<ICloudHealthCheckService, CloudHealthCheckService>();
 
 var app = builder.Build();
 

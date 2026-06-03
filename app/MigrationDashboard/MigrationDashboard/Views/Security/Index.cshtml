@@ -55,11 +55,14 @@
                     </h5>
                 </div>
 
+                @{
+                    string complianceColorClass = Model.StatusBadgeClass.Contains("success") ? "success" : (Model.StatusBadgeClass.Contains("danger") ? "danger" : (Model.StatusBadgeClass.Contains("warning") ? "warning" : "info"));
+                }
                 <div class="position-relative my-3 d-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
                     <!-- Circular Score representation using radial gradient/SVG or CSS -->
                     <svg viewBox="0 0 36 36" class="w-100 h-100">
                         <path class="text-light" stroke-width="3" stroke="rgba(226, 232, 240, 0.8)" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-@Model.StatusBadgeClass" stroke-width="3.2" stroke-dasharray="@Model.ComplianceScore, 100" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-@complianceColorClass" stroke-width="3.2" stroke-dasharray="@Model.ComplianceScore, 100" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <div class="position-absolute text-center">
                         <span class="fs-1 font-bold text-dark font-monospace d-block leading-none">@Model.ComplianceScore</span>
@@ -68,7 +71,7 @@
                 </div>
 
                 <div class="w-100 mt-2">
-                    <span class="badge bg-@Model.StatusBadgeClass bg-opacity-15 text-@Model.StatusBadgeClass px-3 py-2 fs-6 rounded-pill font-bold">
+                    <span class="status-badge @complianceColorClass px-3 py-2" style="font-size: 13px !important; display: inline-flex; border-radius: 20px;">
                         Trạng thái: @Model.StatusBadge
                     </span>
                     <p class="text-xxs text-muted mt-3 mb-0">Tính toán tự động dựa trên 23 tiêu chí cấu hình bảo mật AWS và IaC.</p>

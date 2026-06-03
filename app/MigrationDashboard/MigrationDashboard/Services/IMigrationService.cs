@@ -5,6 +5,7 @@ namespace MigrationDashboard.Services;
 
 public interface IMigrationService
 {
-    Task<MigrationResultViewModel> StartMigrationAsync();
+    Task<MigrationResultViewModel> StartMigrationAsync(string? migrationId = null);
     Task<MigrationResultViewModel> RollbackMigrationAsync();
+    MigrationResultViewModel? GetMigrationResult(string migrationId);
 }

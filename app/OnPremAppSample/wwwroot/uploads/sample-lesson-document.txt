@@ -1,0 +1,7 @@
+[EduCourse Sample Lesson Document]
+This file simulates a course lesson document (e.g., slide, handout PDF, or transcript).
+Path: wwwroot/uploads/sample-lesson-document.txt
+State: On-premises local filesystem dependency.
+Migration Target: AWS S3 Bucket (s3://educourse-assets-bucket/)
+Created: 2026-06-03
+Content: Welcome to EduCourse! This lesson covers basic cloud computing models, virtualization, and IaC deployment patterns using LocalStack and Terraform.

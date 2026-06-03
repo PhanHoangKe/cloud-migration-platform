@@ -1,0 +1,116 @@
+@model OnPremAppSample.Models.Course
+
+@{
+    ViewData["Title"] = Model.Title;
+    var lessons = ViewBag.Lessons as List<OnPremAppSample.Models.Lesson> ?? new List<OnPremAppSample.Models.Lesson>();
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        ⬅ Quay lại danh sách khóa học
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Course Info -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge bg-primary rounded-pill px-3 py-1">@Model.Category</span>
+                
+                @{
+                    var badgeClass = Model.Difficulty switch
+                    {
+                        "Beginner" => "bg-success-subtle text-success border-success-subtle",
+                        "Intermediate" => "bg-warning-subtle text-warning border-warning-subtle",
+                        "Advanced" => "bg-danger-subtle text-danger border-danger-subtle",
+                        _ => "bg-secondary-subtle text-secondary border-secondary-subtle"
+                    };
+                }
+                <span class="badge @badgeClass border rounded-pill px-3 py-1">@Model.Difficulty</span>
+            </div>
+
+            <h1 class="display-5 fw-bold mb-3">@Model.Title</h1>
+            <p class="lead text-secondary">@Model.Description</p>
+            
+            <h4 class="mt-4 mb-3 border-bottom pb-2">Thông tin giảng dạy</h4>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <p class="mb-1 text-muted">Giảng viên phụ trách</p>
+                    <h5>👨‍🏫 @Model.Instructor</h5>
+                </div>
+                <div class="col-sm-6">
+                    <p class="mb-1 text-muted">Thời lượng khóa học</p>
+                    <h5>⏱️ @Model.Duration</h5>
+                </div>
+                <div class="col-sm-6">
+                    <p class="mb-1 text-muted">Học phí</p>
+                    <h5 class="text-success">$@Model.Price</h5>
+                </div>
+                <div class="col-sm-6">
+                    <p class="mb-1 text-muted">Đường dẫn tệp tin ảnh</p>
+                    <code class="d-block bg-light p-2 rounded text-secondary" style="font-size: 0.85rem;">@Model.ImagePath</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons in this Course -->
+        <div class="card border-0 shadow-sm rounded-3 p-4">
+            <h3 class="mb-4">📋 Chương Trình Học (@lessons.Count bài học)</h3>
+            
+            @if (!lessons.Any())
+            {
+                <div class="alert alert-info">Chưa có bài học nào được tải lên cho khóa học này.</div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var lesson in lessons)
+                    {
+                        <div class="list-group-item py-3 px-0 border-bottom">
+                            <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                <h5 class="mb-1 fw-bold">@lesson.Title</h5>
+                                <span class="badge bg-secondary">⏱️ @lesson.DurationMinutes phút</span>
+                            </div>
+                            <p class="mb-2 text-muted" style="font-size: 0.9rem;">@lesson.Description</p>
+                            
+                            <div class="bg-light p-2 rounded d-flex align-items-center justify-content-between">
+                                <small class="text-secondary font-monospace" style="font-size: 0.8rem;">
+                                    📁 Local Doc: <code>@lesson.DocumentPath</code>
+                                </small>
+                                <a href="@lesson.DocumentPath" target="_blank" class="btn btn-sm btn-outline-indigo" style="font-size: 0.75rem; border-color: #4f46e5; color: #4f46e5;">
+                                    🗎 Mở File Mẫu
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Sidebar Migration Notes -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 p-4 bg-light border-start border-4 border-warning mb-4">
+            <h4 class="fw-bold mb-3 text-warning-emphasis">📝 Migration Target Check</h4>
+            <p style="font-size: 0.9rem; line-height: 1.6;">
+                Trang chi tiết khóa học này minh họa việc sử dụng tài sản tệp tin cục bộ (On-premises Static Assets) được khai báo trực tiếp trong DB/Mock:
+            </p>
+            <ul class="ps-3 mb-3" style="font-size: 0.85rem;">
+                <li class="mb-2"><strong>Ảnh bìa:</strong> <code>@Model.ImagePath</code></li>
+                <li class="mb-2"><strong>Tài liệu học tập:</strong> Các bài học liên kết trực tiếp tới file cục bộ trong <code>wwwroot/uploads</code>.</li>
+            </ul>
+            <div class="alert alert-warning border-0 p-2 mb-0" style="font-size: 0.8rem;">
+                <strong>Mục tiêu Migration:</strong> Khi chuyển dịch ứng dụng lên Cloud (AWS/LocalStack), ta cần viết Terraform để khởi tạo một AWS S3 Bucket, chuyển các file này lên S3, và cập nhật đường dẫn ứng dụng để trỏ sang URL của S3.
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3 p-4">
+            <h4 class="fw-bold mb-3 text-indigo">💡 Đăng ký khóa học</h4>
+            <p class="text-muted" style="font-size: 0.9rem;">
+                Hệ thống Demo hiện tại không tích hợp hệ thống thanh toán hay tài khoản người dùng để giữ ứng dụng gọn nhẹ, sẵn sàng cho việc phân tích hạ tầng (Assessment).
+            </p>
+            <button class="btn btn-secondary w-100 disabled" disabled>Đăng Ký Học (Disabled)</button>
+        </div>
+    </div>
+</div>

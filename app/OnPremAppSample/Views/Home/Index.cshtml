@@ -1,8 +1,99 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Hệ thống quản lý EduCourse (On-Premises)";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="p-5 mb-4 rounded-3 text-white" style="background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%); box-shadow: 0 10px 30px rgba(79, 70, 229, 0.15);">
+    <div class="container-fluid py-5">
+        <h1 class="display-4 fw-bold">EduCourse Sample Application</h1>
+        <p class="col-md-10 fs-4">Ứng dụng mẫu ASP.NET Core MVC chạy tại môi trường vật lý (On-Premises). Được thiết kế giả định đầy đủ thành phần phục vụ quá trình khảo sát và chuyển dịch lên Cloud (AWS/LocalStack) bằng Terraform.</p>
+        <hr class="my-4 bg-light opacity-25">
+        <div class="d-flex flex-wrap gap-3">
+            <a asp-controller="Courses" asp-action="Index" class="btn btn-info btn-lg px-4 fw-bold text-white">Xem Danh Sách Khóa Học</a>
+            <a asp-controller="Lessons" asp-action="Index" class="btn btn-outline-light btn-lg px-4">Tài Liệu & Bài Học</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Cấu trúc hạ tầng On-Prem -->
+    <div class="col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-indigo-light p-3 rounded-3 me-3" style="background-color: #e0e7ff; color: #4f46e5;">
+                        🗄️
+                    </div>
+                    <h3 class="card-title mb-0">Cấu Hình Kết Nối Database</h3>
+                </div>
+                <p class="card-text text-muted">Hệ thống đang kết nối trực tiếp đến SQL Server nội bộ thông qua Connection String lưu trong file <code>appsettings.json</code>:</p>
+                <div class="bg-dark text-light p-3 rounded-2 font-monospace" style="font-size: 0.85rem; overflow-x: auto;">
+                    "DefaultConnection": "Server=localhost;Database=EduCourseSampleDb;Trusted_Connection=True;TrustServerCertificate=True;"
+                </div>
+                <div class="mt-3 alert alert-warning d-flex align-items-center border-0 py-2">
+                    <span class="me-2">⚠️</span>
+                    <span style="font-size: 0.85rem;"><strong>Assessment Target:</strong> Chuỗi kết nối này sẽ được tool migration quét và đề xuất chuyển dịch sang AWS RDS hoặc LocalStack Aurora.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lưu trữ tệp tin cục bộ -->
+    <div class="col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-amber-light p-3 rounded-3 me-3" style="background-color: #fef3c7; color: #d97706;">
+                        📁
+                    </div>
+                    <h3 class="card-title mb-0">Local File Storage (Uploads)</h3>
+                </div>
+                <p class="card-text text-muted">Tất cả tài liệu bài học và hình ảnh khóa học đang được lưu trữ tĩnh trong thư mục máy chủ web:</p>
+                <div class="bg-light p-3 rounded-2 font-monospace text-secondary" style="font-size: 0.85rem;">
+                    📂 wwwroot/uploads/<br>
+                    ├── 📄 sample-course-image.txt<br>
+                    └── 📄 sample-lesson-document.txt
+                </div>
+                <div class="mt-3 alert alert-info d-flex align-items-center border-0 py-2">
+                    <span class="me-2">💡</span>
+                    <span style="font-size: 0.85rem;"><strong>Assessment Target:</strong> Các tệp tin tĩnh cục bộ cần được upload lên S3 Bucket (giả lập qua LocalStack) để đảm bảo Stateless App.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <h3 class="mb-4">Thông số phân tích ứng dụng (Pre-Migration Assessment)</h3>
+                <div class="row text-center g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <h4 class="text-primary mb-1">4</h4>
+                            <span class="text-muted" style="font-size: 0.85rem;">Controllers mẫu</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <h4 class="text-primary mb-1">5</h4>
+                            <span class="text-muted" style="font-size: 0.85rem;">Views (.cshtml)</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <h4 class="text-primary mb-1">1</h4>
+                            <span class="text-muted" style="font-size: 0.85rem;">Connection String</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <h4 class="text-primary mb-1">2</h4>
+                            <span class="text-muted" style="font-size: 0.85rem;">File Uploads</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

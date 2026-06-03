@@ -25,6 +25,8 @@ public class MigrationService : IMigrationService
     private readonly IDatabaseExportService _dbExportService;
     private readonly OnPremiseAppOptions _options;
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, MigrationResultViewModel> _activeMigrations = new();
+
     public MigrationService(
         IConfiguration configuration, 
         IWebHostEnvironment env, 
@@ -41,7 +43,64 @@ public class MigrationService : IMigrationService
         _options = options.Value;
     }
 
-    public async Task<MigrationResultViewModel> StartMigrationAsync()
+    public MigrationResultViewModel? GetMigrationResult(string migrationId)
+    {
+        if (_activeMigrations.TryGetValue(migrationId, out var cachedResult))
+        {
+            return cachedResult;
+        }
+
+        // Try to reconstruct from local report file
+        var tempDirectory = Path.Combine(_env.WebRootPath, "migration-packages", migrationId);
+        var reportJsonPath = Path.Combine(tempDirectory, "migration-report.json");
+        if (File.Exists(reportJsonPath))
+        {
+            try
+            {
+                var jsonContent = File.ReadAllText(reportJsonPath);
+                var report = JsonConvert.DeserializeObject<dynamic>(jsonContent);
+                if (report != null)
+                {
+                    var result = new MigrationResultViewModel
+                    {
+                        MigrationId = migrationId,
+                        Status = "COMPLETED",
+                        IsSuccess = true,
+                        S3BucketName = report.s3BucketName ?? string.Empty,
+                        PackageSize = report.packageSizeMb ?? string.Empty,
+                        ReadinessScore = (int)(report.readinessScore ?? 0),
+                        LambdaSelfTestResponse = (report.lambdaSelfTestStatus == "Passed") ? "Success" : "Failed",
+                        DatabaseExportStatus = report.databaseExport?.status ?? string.Empty,
+                        DatabaseExportS3Key = report.databaseExport?.s3Key ?? string.Empty,
+                        DatabaseTableCount = (int)(report.databaseExport?.tableCount ?? 0),
+                        DatabaseTotalRows = (int)(report.databaseExport?.totalRows ?? 0),
+                        ReportGenerated = true,
+                        ReportHtmlS3Key = $"migrations/{migrationId}/migration-report.html",
+                        ReportJsonS3Key = $"migrations/{migrationId}/migration-report.json",
+                        ReportLocalHtmlPath = Path.Combine(tempDirectory, "migration-report.html")
+                    };
+
+                    if (report.uploadedFiles != null)
+                    {
+                        foreach (var f in report.uploadedFiles)
+                        {
+                            result.S3ObjectKeys.Add($"migrations/{migrationId}/{f}");
+                        }
+                    }
+
+                    return result;
+                }
+            }
+            catch
+            {
+                // Fallback to null
+            }
+        }
+
+        return null;
+    }
+
+    public async Task<MigrationResultViewModel> StartMigrationAsync(string? migrationId = null)
     {
         DateTime startedAt = DateTime.UtcNow;
         
@@ -57,10 +116,12 @@ public class MigrationService : IMigrationService
 
         var result = new MigrationResultViewModel
         {
-            MigrationId = $"MIGRATION_{DateTime.Now:yyyyMMdd_HHmmss}",
+            MigrationId = migrationId ?? $"MIGRATION_{DateTime.Now:yyyyMMdd_HHmmss}",
             S3BucketName = bucketName,
             IsSuccess = false
         };
+
+        _activeMigrations[result.MigrationId] = result;
 
         // 2. Initialize AWS Clients configured for LocalStack
         var s3Config = new AmazonS3Config
@@ -146,6 +207,7 @@ public class MigrationService : IMigrationService
                     AddLocalLog(result, "DATABASE_CONNECTED", "Ket noi CSDL On-premise thanh cong.");
                     if (string.IsNullOrEmpty(dbExportResult.ErrorMessage))
                     {
+                        await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "DATABASE_EXPORTED", $"Database export succeeded: {dbExportResult.TotalTables} tables, {dbExportResult.TotalRows} rows");
                         AddLocalLog(result, "DATABASE_EXPORTED", $"Xuat du lieu thanh cong: {dbExportResult.TotalTables} bang, {dbExportResult.TotalRows} dong.");
                         AddLocalLog(result, "DATABASE_EXPORT_UPLOADED_TO_S3", "Tai tep database-export.json len S3 thanh cong.");
                         if (!string.IsNullOrEmpty(dbExportResult.S3Key))
@@ -155,11 +217,13 @@ public class MigrationService : IMigrationService
                     }
                     else
                     {
+                        await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "DATABASE_EXPORT_FAILED", $"Database export warning: {dbExportResult.ErrorMessage}");
                         AddLocalLog(result, "DATABASE_EXPORT_FAILED", $"Xuat CSDL co canh bao: {dbExportResult.ErrorMessage}");
                     }
                 }
                 else
                 {
+                    await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "DATABASE_EXPORT_FAILED", $"Database connection failed: {dbExportResult.ErrorMessage}");
                     AddLocalLog(result, "DATABASE_EXPORT_FAILED", $"Ket noi CSDL that bai: {dbExportResult.ErrorMessage}");
                 }
             }
@@ -167,6 +231,7 @@ public class MigrationService : IMigrationService
             {
                 result.DatabaseExportStatus = "FAILED";
                 result.DatabaseExportErrorMessage = ex.Message;
+                await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "DATABASE_EXPORT_FAILED", $"Database export system error: {ex.Message}");
                 AddLocalLog(result, "DATABASE_EXPORT_FAILED", $"Xuat CSDL gap loi he thong: {ex.Message}");
             }
 
@@ -300,26 +365,33 @@ public class MigrationService : IMigrationService
             }
 
             result.IsSuccess = true;
+            result.Status = "COMPLETED";
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "COMPLETED", "Migration process completed successfully");
+            AddLocalLog(result, "COMPLETED", "Quá trình di trú hoàn tất thành công.");
         }
         catch (AmazonDynamoDBException ex) when (ex.Message.Contains("ResourceNotFoundException") || ex.ErrorCode == "ResourceNotFoundException")
         {
             result.ErrorMessage = $"Lỗi DynamoDB: Table '{tableName}' không tồn tại. Vui lòng chạy lệnh 'terraform apply' để tạo tài nguyên trong LocalStack trước.";
             result.Status = "FAILED";
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "FAILED", $"Migration failed due to DynamoDB table missing: {ex.Message}");
         }
         catch (AmazonS3Exception ex) when (ex.ErrorCode == "NoSuchBucket")
         {
             result.ErrorMessage = $"Lỗi S3: Bucket '{bucketName}' không tồn tại. Vui lòng chạy lệnh 'terraform apply' để khởi tạo bucket.";
             result.Status = "FAILED";
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "FAILED", $"Migration failed due to S3 bucket missing: {ex.Message}");
         }
         catch (AmazonLambdaException ex) when (ex.ErrorCode == "ResourceNotFoundException" || ex.Message.Contains("Function not found"))
         {
             result.ErrorMessage = $"Lỗi Lambda: Function '{lambdaName}' không tồn tại. Vui lòng deploy Lambda function qua Terraform trước.";
             result.Status = "FAILED";
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "FAILED", $"Migration failed due to Lambda missing: {ex.Message}");
         }
         catch (Exception ex)
         {
             result.ErrorMessage = $"Lỗi kết nối LocalStack (Endpoint: {serviceUrl}): {ex.Message}. Hãy chắc chắn rằng LocalStack Docker Container đang chạy.";
             result.Status = "FAILED";
+            await LogToDynamoDbAsync(dynamoClient, tableName, result.MigrationId, "FAILED", $"Migration failed with exception: {ex.Message}");
         }
 
         return result;

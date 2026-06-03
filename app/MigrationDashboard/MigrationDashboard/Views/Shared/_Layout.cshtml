@@ -19,9 +19,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-container app-shell">
         <!-- Sidebar -->
-        <aside class="sidebar shadow-lg" id="sidebar">
+        <aside class="sidebar app-sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-wrapper">
                     <div class="logo-icon">
@@ -49,6 +49,12 @@
                         <a href="/Assessment" class="nav-link-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "Assessment" ? "active" : "")">
                             <i class="bi bi-clipboard2-check"></i>
                             <span>Đánh giá nguồn</span>
+                        </a>
+                    </li>
+                    <li class="nav-item-custom">
+                        <a href="/Migration/History" class="nav-link-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "Migration" && ViewContext.RouteData.Values["action"]?.ToString() == "History" ? "active" : "")">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Lịch sử chuyển đổi</span>
                         </a>
                     </li>
                     <li class="nav-item-custom">
@@ -82,6 +88,12 @@
                         </a>
                     </li>
                     <li class="nav-item-custom">
+                        <a href="/CloudResources/Health" class="nav-link-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "CloudResources" && ViewContext.RouteData.Values["action"]?.ToString() == "Health" ? "active" : "")">
+                            <i class="bi bi-heart-pulse"></i>
+                            <span>Kiểm tra môi trường</span>
+                        </a>
+                    </li>
+                    <li class="nav-item-custom">
                         <a href="/#cost-estimation" class="nav-link-custom">
                             <i class="bi bi-currency-dollar"></i>
                             <span>Ước tính chi phí</span>
@@ -105,15 +117,15 @@
             <div class="sidebar-footer">
                 <div class="status-indicator">
                     <span class="status-dot online" id="localstackStatusDot"></span>
-                    <span class="status-text" id="localstackStatusText">LocalStack: Đang chạy</span>
+                    <span class="status-text text-truncate" id="localstackStatusText">LocalStack: Đang chạy</span>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content Area -->
-        <div class="main-content">
+        <div class="main-content app-main-wrapper">
             <!-- Topbar -->
-            <header class="topbar shadow-sm">
+            <header class="topbar app-header">
                 <div class="container-fluid d-flex align-items-center justify-content-between h-100 px-4">
                     <div class="d-flex align-items-center">
                         <button class="btn btn-toggle-sidebar d-md-none me-3" id="sidebarToggle" style="background: none; border: none; font-size: 24px; padding: 0;">
@@ -123,7 +135,7 @@
                     </div>
                     
                     <div class="topbar-actions d-flex align-items-center gap-3">
-                        <div class="badge-env shadow-sm">
+                        <div class="badge-env">
                             <i class="bi bi-shield-check text-success"></i>
                             <span>Môi trường: LocalStack</span>
                         </div>
@@ -136,12 +148,12 @@
             </header>
 
             <!-- Page Body -->
-            <main class="page-body">
+            <main class="page-body app-main">
                 @RenderBody()
             </main>
 
             <!-- Footer -->
-            <footer class="main-footer border-top bg-white py-3">
+            <footer class="main-footer py-3">
                 <div class="container-fluid text-center text-muted">
                     <small>&copy; 2026 - Hệ thống mô phỏng chuyển đổi ứng dụng - Đồ án Điện toán đám mây</small>
                 </div>

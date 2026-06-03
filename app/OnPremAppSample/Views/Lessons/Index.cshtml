@@ -1,0 +1,84 @@
+@model IEnumerable<OnPremAppSample.Models.Lesson>
+
+@{
+    ViewData["Title"] = "Tài Liệu & Bài Học";
+    var selectedCourse = ViewBag.SelectedCourse as string;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h2 class="mb-1 text-indigo">📖 Danh Sách Bài Học & Tài Liệu</h2>
+        @if (!string.IsNullOrEmpty(selectedCourse))
+        {
+            <p class="text-muted mb-0">Đang lọc theo khóa học: <strong class="text-primary">@selectedCourse</strong></p>
+        }
+        else
+        {
+            <p class="text-muted mb-0">Tất cả bài học và tài liệu của các khóa học trong hệ thống.</p>
+        }
+    </div>
+    <div class="d-flex gap-2">
+        @if (!string.IsNullOrEmpty(selectedCourse))
+        {
+            <a asp-action="Index" asp-route-courseId="" class="btn btn-outline-secondary btn-sm">Xóa bộ lọc</a>
+        }
+        <span class="badge bg-secondary py-2 px-3 rounded-pill d-flex align-items-center">Tổng số: @Model.Count()</span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Lessons List -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 p-4">
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info mb-0">Không tìm thấy bài học nào phù hợp.</div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var lesson in Model)
+                    {
+                        <div class="list-group-item py-3 px-0 border-bottom">
+                            <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+                                <h5 class="mb-1 fw-bold text-dark">@lesson.Title</h5>
+                                <span class="badge bg-indigo-subtle text-indigo rounded-pill px-2 py-1" style="font-size: 0.8rem;">⏱️ @lesson.DurationMinutes phút</span>
+                            </div>
+                            <p class="mb-2 text-muted" style="font-size: 0.9rem;">@lesson.Description</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 p-2 bg-light rounded">
+                                <small class="text-secondary font-monospace" style="font-size: 0.8rem;">
+                                    📚 Khóa học: <strong>@lesson.CourseTitle</strong>
+                                </small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted" style="font-size: 0.75rem;">Local File Path:</span>
+                                    <code class="bg-white px-2 py-1 border rounded text-dark text-truncate d-inline-block" style="max-width: 200px; font-size: 0.75rem;" title="@lesson.DocumentPath">@lesson.DocumentPath</code>
+                                    <a href="@lesson.DocumentPath" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size: 0.75rem; height: 22px; line-height: 20px;">
+                                        🗎 Mở
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right Column Sidebar Info -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 p-4 bg-info-subtle border-start border-4 border-info">
+            <h4 class="fw-bold mb-3 text-info-emphasis">📂 Phân Tích Lưu Trữ Tĩnh</h4>
+            <p style="font-size: 0.9rem; line-height: 1.6;">
+                Mỗi bài học trong danh sách đều đi kèm một tài liệu PDF hoặc TXT tương ứng được cấu hình trực tiếp từ thư mục local:
+            </p>
+            <div class="bg-white p-3 rounded border font-monospace text-secondary mb-3" style="font-size: 0.8rem;">
+                📂 wwwroot/uploads/<br>
+                └── 📄 sample-lesson-document.txt
+            </div>
+            <p style="font-size: 0.85rem;" class="mb-0 text-muted">
+                <strong>Trong quá trình Assessment & Migration:</strong> Bộ quét tệp tin tĩnh (Static Assets Analyzer) sẽ phát hiện thư mục <code>wwwroot/uploads</code> chứa các tài liệu bài học này và đánh dấu đây là một <strong>On-premises local storage dependency</strong> cần được đồng bộ và thay thế bằng Cloud S3.
+            </p>
+        </div>
+    </div>
+</div>

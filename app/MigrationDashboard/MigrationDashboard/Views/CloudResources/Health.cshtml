@@ -1,0 +1,193 @@
+@model MigrationDashboard.Models.CloudHealthCheckViewModel
+@{
+    ViewData["Title"] = "Kiểm tra môi trường Cloud";
+
+    string scoreColor = "success";
+    string bgGradient = "linear-gradient(135deg, #10b981 0%, #059669 100%)"; // Emerald green
+    string overallStatusText = "Ổn định";
+
+    if (Model.OverallStatus == "Warning")
+    {
+        scoreColor = "warning";
+        bgGradient = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"; // Amber
+        overallStatusText = "Cần lưu ý";
+    }
+    else if (Model.OverallStatus == "Critical")
+    {
+        scoreColor = "danger";
+        bgGradient = "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"; // Red
+        overallStatusText = "Nguy kịch";
+    }
+}
+
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h3 class="font-bold text-dark mb-1" style="font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">Kiểm tra môi trường Cloud giả lập</h3>
+                    <p class="text-secondary mb-0">Đánh giá và kiểm tra trạng thái hoạt động của Docker LocalStack cùng cấu hình Terraform trước khi thực hiện di trú.</p>
+                </div>
+                <div>
+                    <a href="/CloudResources/Health" class="btn btn-outline-primary" style="border-radius: 8px; font-weight: 600; padding: 0.5rem 1.25rem;">
+                        <i class="bi bi-arrow-clockwise me-2"></i> Kiểm tra lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Alert if any -->
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3">
+                    <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i> @Model.ErrorMessage
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Overview Panel (Dashboard Health Stats) -->
+    <div class="row g-4 mb-4">
+        <!-- Circular Health Score Card -->
+        <div class="col-12 col-lg-4">
+            <div class="dashboard-card h-100 p-4 text-center d-flex flex-column align-items-center justify-content-between" style="position: relative; overflow: hidden;">
+                <div class="w-100 text-start border-bottom pb-2 mb-3">
+                    <h5 class="card-title-custom text-dark text-sm" style="font-weight: 700;">
+                        <i class="bi bi-heart-pulse-fill text-danger me-2"></i> Chỉ số sẵn sàng hệ thống
+                    </h5>
+                </div>
+
+                <div class="position-relative my-4 d-flex align-items-center justify-content-center" style="width: 160px; height: 160px;">
+                    <svg viewBox="0 0 36 36" class="w-100 h-100">
+                        <path class="text-light" stroke-width="3.5" stroke="rgba(226, 232, 240, 0.8)" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-@scoreColor" stroke-width="3.8" stroke-dasharray="@Model.HealthScore, 100" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="position-absolute text-center">
+                        <span class="fs-1 font-bold text-dark font-monospace d-block leading-none">@Model.HealthScore</span>
+                        <span class="text-xxs text-uppercase text-muted tracking-wider" style="font-size: 9px; font-weight: 700;">Điểm sức khỏe %</span>
+                    </div>
+                </div>
+
+                <div class="w-100 mt-2">
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                        <span class="status-badge @scoreColor px-3 py-2 fs-6 rounded-pill">
+                            @overallStatusText
+                        </span>
+                    </div>
+                    <span class="text-xxs text-muted font-monospace"><i class="bi bi-clock me-1"></i> Kiểm tra lúc: @Model.CheckedAt.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Status Info Description Card -->
+        <div class="col-12 col-lg-8">
+            <div class="dashboard-card h-100 p-4 text-white d-flex flex-column justify-content-between border-0 shadow" style="background: @bgGradient;">
+                <div>
+                    <span class="badge bg-white bg-opacity-20 text-white px-3 py-2 rounded-pill font-bold mb-3 text-uppercase tracking-wider" style="font-size: 10px;">Báo cáo tổng quan</span>
+                    <h2 class="font-bold mb-2" style="font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">
+                        @if (Model.OverallStatus == "Healthy")
+                        {
+                            <span>Môi trường Cloud đã SẴN SÀNG!</span>
+                        }
+                        else if (Model.OverallStatus == "Warning")
+                        {
+                            <span>Hệ thống hoạt động với CẢNH BÁO</span>
+                        }
+                        else
+                        {
+                            <span>Môi trường Cloud BỊ LỖI KẾT NỐI!</span>
+                        }
+                    </h2>
+                    <p class="mb-4 text-white text-opacity-85 text-sm" style="line-height: 1.6;">
+                        @if (Model.OverallStatus == "Healthy")
+                        {
+                            <span>Tất cả các dịch vụ giả lập AWS (S3, DynamoDB, Lambda) trên LocalStack đã khởi chạy thành công và cấp quyền hoạt động bình thường. Bạn có thể bắt đầu quy trình di trú ứng dụng an toàn.</span>
+                        }
+                        else if (Model.OverallStatus == "Warning")
+                        {
+                            <span>Hệ thống phát hiện một số thành phần phụ trợ hoặc phân quyền chưa sẵn sàng (ví dụ: thiếu hàm Lambda tự kiểm thử). Di trú cơ bản vẫn hoạt động nhưng một số chức năng báo cáo tự động có thể bị ảnh hưởng.</span>
+                        }
+                        else
+                        {
+                            <span>Hệ thống giả lập LocalStack chưa chạy hoặc tài nguyên Terraform chưa được triển khai. Vui lòng kiểm tra trạng thái Docker Desktop và thực thi cấu hình IaC trước khi di trú để tránh lỗi hệ thống.</span>
+                        }
+                    </p>
+                </div>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-3 border-top border-white border-opacity-15 text-sm">
+                    <span>Cổng giả lập: <strong class="font-monospace">http://localhost:4566</strong></span>
+                    <span>Tài liệu cấu hình: <a href="file:///d:/cloud-migration-platform/README.md" class="text-white text-decoration-underline font-semibold" target="_blank">Hướng dẫn chi tiết</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checklist Cards Grid -->
+    <h5 class="font-bold text-dark mb-3 mt-4" style="font-weight: 700;"><i class="bi bi-check2-circle text-primary me-2"></i> Chi tiết checklist kiểm tra</h5>
+    <div class="row g-3">
+        @foreach (var item in Model.Items)
+        {
+            string itemColor = "secondary";
+            string bgLightColor = "#f8fafc";
+            string iconName = "bi-question-circle";
+
+            if (item.Status == "Healthy")
+            {
+                itemColor = "success";
+                bgLightColor = "rgba(16, 185, 129, 0.03)";
+                iconName = "bi-check-circle-fill text-success";
+            }
+            else if (item.Status == "Warning")
+            {
+                itemColor = "warning";
+                bgLightColor = "rgba(245, 158, 11, 0.03)";
+                iconName = "bi-exclamation-triangle-fill text-warning";
+            }
+            else if (item.Status == "Critical")
+            {
+                itemColor = "danger";
+                bgLightColor = "rgba(239, 68, 68, 0.03)";
+                iconName = "bi-x-circle-fill text-danger";
+            }
+
+            <div class="col-12 col-md-6 col-xxl-4">
+                <div class="dashboard-card h-100 p-3 d-flex flex-column justify-content-between" style="border-left: 4px solid var(--@itemColor-color); background-color: @bgLightColor;">
+                    <div>
+                        <!-- Header Line -->
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <h6 class="font-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-weight: 700; font-size: 14px;">
+                                <i class="bi @iconName"></i> @item.Name
+                            </h6>
+                            <span class="status-badge @itemColor" style="font-size: 10px; padding: 3px 8px;">
+                                @if (item.Status == "Healthy") { <span>Đạt</span> }
+                                else if (item.Status == "Warning") { <span>Cảnh báo</span> }
+                                else if (item.Status == "Critical") { <span>Lỗi</span> }
+                                else { <span>Không rõ</span> }
+                            </span>
+                        </div>
+                        
+                        <!-- Description -->
+                        <p class="text-xs text-muted mb-2">@item.Description</p>
+                        
+                        <!-- Verification Details -->
+                        <div class="p-2 rounded font-monospace text-xxs text-secondary bg-white border border-light-subtle my-2" style="font-size: 11px; max-height: 80px; overflow-y: auto; line-height: 1.4;">
+                            @item.Details
+                        </div>
+                    </div>
+
+                    <!-- Recommendation Box if Fail/Warning -->
+                    @if (item.Status != "Healthy" && !string.IsNullOrEmpty(item.Recommendation))
+                    {
+                        <div class="mt-2 p-2 rounded-3 border border-warning border-opacity-20 text-xxs" style="background-color: rgba(245, 158, 11, 0.06); color: #b45309; line-height: 1.4;">
+                            <strong class="d-block mb-1"><i class="bi bi-lightbulb-fill me-1"></i> Khắc phục khuyên dùng:</strong>
+                            @item.Recommendation
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

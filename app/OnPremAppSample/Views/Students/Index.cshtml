@@ -1,0 +1,70 @@
+@model IEnumerable<OnPremAppSample.Models.Student>
+
+@{
+    ViewData["Title"] = "Danh Sách Học Viên";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1 text-indigo">👥 Danh Sách Học Viên</h2>
+        <p class="text-muted">Danh sách học viên đăng ký trên hệ thống EduCourse (dữ liệu mock tại chỗ).</p>
+    </div>
+    <span class="badge bg-secondary py-2 px-3 rounded-pill">Tổng số: @Model.Count()</span>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col" class="ps-4">Mã số</th>
+                    <th scope="col">Họ và Tên</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Ngày Nhập Học</th>
+                    <th scope="col">Chuyên Ngành</th>
+                    <th scope="col" class="pe-4">Trạng Thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in Model)
+                {
+                    <tr>
+                        <td class="ps-4 fw-bold text-secondary">#@student.Id</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 600;">
+                                    @string.Concat(student.FullName.Split(' ').Select(n => n[0]))
+                                </div>
+                                <span>@student.FullName</span>
+                            </div>
+                        </td>
+                        <td><a href="mailto:@student.Email" class="text-decoration-none">@student.Email</a></td>
+                        <td>@student.EnrollmentDate.ToString("dd/MM/yyyy")</td>
+                        <td>@student.Major</td>
+                        <td class="pe-4">
+                            @{
+                                var statusClass = student.Status switch
+                                {
+                                    "Active" => "bg-success text-white",
+                                    "Completed" => "bg-info text-dark",
+                                    "Suspended" => "bg-danger text-white",
+                                    _ => "bg-secondary text-white"
+                                };
+                                var statusName = student.Status switch
+                                {
+                                    "Active" => "Đang Học",
+                                    "Completed" => "Hoàn Thành",
+                                    "Suspended" => "Tạm Dừng",
+                                    _ => student.Status
+                                };
+                            }
+                            <span class="badge @statusClass rounded-pill px-3 py-1 text-uppercase" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">
+                                @statusName
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

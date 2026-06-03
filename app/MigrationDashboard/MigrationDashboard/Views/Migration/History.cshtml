@@ -1,0 +1,233 @@
+@model MigrationDashboard.Models.MigrationHistoryViewModel
+@{
+    ViewData["Title"] = "Lịch sử chuyển đổi";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Title -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h3 class="font-bold text-dark mb-1" style="font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">Lịch sử chuyển đổi & Kiểm toán</h3>
+                    <p class="text-secondary mb-0">Theo dõi, kiểm toán và so sánh hiệu suất của tất cả các lượt di trú đã thực hiện trên môi trường LocalStack.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form asp-controller="Migration" asp-action="Start" method="post">
+                        <button type="submit" class="btn btn-primary shadow-sm" style="border-radius: 8px; font-weight: 600;">
+                            <i class="bi bi-rocket-takeoff me-2"></i> Chạy di trú mới
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Alert if DynamoDB scan fails -->
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-danger border-danger border-opacity-25 rounded-4 p-4 shadow-sm mb-0">
+                    <div class="d-flex gap-3">
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-3 flex-shrink-0"></i>
+                        <div>
+                            <h5 class="alert-heading text-danger font-bold mb-1" style="font-weight: 700;">Lỗi truy vấn lịch sử</h5>
+                            <p class="mb-2">Hệ thống không thể tải lịch sử di trú từ bảng DynamoDB logs của LocalStack.</p>
+                            <hr class="my-2 border-danger border-opacity-25">
+                            <code class="text-xs text-danger font-semibold font-monospace">@Model.ErrorMessage</code>
+                            <div class="mt-3">
+                                <strong>Khắc phục:</strong> Đảm bảo LocalStack đang chạy và tài nguyên DynamoDB `cloud-migration-logs-kedep` đã được khởi tạo bằng Terraform.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Summary Metrics Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Total Migrations -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="dashboard-card p-3 h-100 d-flex align-items-center gap-3">
+                <div class="stat-icon info" style="width: 46px; height: 46px; border-radius: 10px; font-size: 20px;">
+                    <i class="bi bi-folder2-open"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Tổng lượt di trú</div>
+                    <h3 class="stat-value">@Model.TotalMigrations</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Completed / Success -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="dashboard-card p-3 h-100 d-flex align-items-center gap-3">
+                <div class="stat-icon success" style="width: 46px; height: 46px; border-radius: 10px; font-size: 20px;">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Thành công</div>
+                    <h3 class="stat-value text-success">@Model.CompletedCount</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Warnings -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="dashboard-card p-3 h-100 d-flex align-items-center gap-3">
+                <div class="stat-icon warning" style="width: 46px; height: 46px; border-radius: 10px; font-size: 20px;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Có cảnh báo</div>
+                    <h3 class="stat-value text-warning">@Model.WarningCount</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Failed -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="dashboard-card p-3 h-100 d-flex align-items-center gap-3">
+                <div class="stat-icon danger" style="width: 46px; height: 46px; border-radius: 10px; font-size: 20px;">
+                    <i class="bi bi-shield-slash"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Thất bại</div>
+                    <h3 class="stat-value text-danger">@Model.FailedCount</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Items List Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header-custom border-bottom pb-2 mb-3">
+                    <h5 class="card-title-custom text-dark text-sm">
+                        <i class="bi bi-list-task text-primary me-2"></i> Nhật ký kiểm toán di trú (Audit Trail)
+                    </h5>
+                    <span class="status-badge info">Lịch sử</span>
+                </div>
+
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 text-sm">
+                            <thead class="table-light text-xs text-muted font-bold text-uppercase border-bottom">
+                                <tr>
+                                    <th style="width: 250px;">Mã lượt di trú (Migration ID)</th>
+                                    <th style="width: 170px;">Thời gian bắt đầu</th>
+                                    <th style="width: 140px;">Trạng thái</th>
+                                    <th style="width: 160px;">Tiến trình (Progress)</th>
+                                    <th style="width: 110px;">Thời lượng</th>
+                                    <th style="width: 100px; text-align: center;">Logs / Cảnh báo</th>
+                                    <th style="text-align: right;">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    string badgeClass = "neutral";
+                                    string statusText = item.CurrentStatus;
+
+                                    if (item.CurrentStatus == "COMPLETED")
+                                    {
+                                        badgeClass = "success";
+                                        statusText = "Thành công";
+                                    }
+                                    else if (item.CurrentStatus == "FAILED")
+                                    {
+                                        badgeClass = "danger";
+                                        statusText = "Thất bại";
+                                    }
+                                    else if (item.CurrentStatus == "WARNING")
+                                    {
+                                        badgeClass = "warning";
+                                        statusText = "Cảnh báo";
+                                    }
+                                    else if (item.CurrentStatus == "RUNNING")
+                                    {
+                                        badgeClass = "info";
+                                        statusText = "Đang chạy";
+                                    }
+                                    else
+                                    {
+                                        badgeClass = "neutral";
+                                        statusText = "Không rõ";
+                                    }
+
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                                <strong class="text-dark font-monospace text-xs">@item.MigrationId</strong>
+                                                <span class="text-xxs text-muted mt-1">
+                                                    Bước cuối: <code class="text-xxs text-secondary font-monospace">@item.CurrentStep</code>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="font-monospace text-muted" style="font-size: 12px;">
+                                            @(item.StartedAt.HasValue ? item.StartedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "N/A")
+                                        </td>
+                                        <td>
+                                            <span class="status-badge @badgeClass">@statusText</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress w-100 bg-light" style="height: 6px; border-radius: 3px;">
+                                                    @{
+                                                        string progressColor = item.CurrentStatus == "FAILED" ? "bg-danger" : (item.CurrentStatus == "WARNING" ? "bg-warning" : "bg-primary");
+                                                    }
+                                                    <div class="progress-bar @progressColor" style="width: @item.ProgressPercent%; border-radius: 3px;"></div>
+                                                </div>
+                                                <span class="font-bold text-dark font-monospace text-xxs">@item.ProgressPercent%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="text-dark font-semibold text-xs"><i class="bi bi-clock me-1 text-muted"></i> @item.DurationText</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary font-monospace" style="font-size: 10px;" title="Tổng số logs: @item.TotalLogs">@item.TotalLogs L</span>
+                                                @if (item.WarningCount > 0)
+                                                {
+                                                    <span class="badge bg-warning bg-opacity-15 text-warning font-monospace" style="font-size: 10px;" title="Cảnh báo: @item.WarningCount"><i class="bi bi-exclamation-triangle"></i> @item.WarningCount</span>
+                                                }
+                                                @if (item.ErrorCount > 0)
+                                                {
+                                                    <span class="badge bg-danger bg-opacity-15 text-danger font-monospace" style="font-size: 10px;" title="Lỗi: @item.ErrorCount"><i class="bi bi-shield-slash"></i> @item.ErrorCount</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <a href="/Migration/Result/@item.MigrationId" class="btn btn-sm btn-outline-primary" style="padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 11px; font-weight: 600;">
+                                                <i class="bi bi-eye me-1"></i> Xem chi tiết
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-folder-x text-secondary" style="font-size: 4rem; opacity: 0.4;"></i>
+                        </div>
+                        <h5 class="font-bold text-dark">Chưa có lịch sử chuyển đổi</h5>
+                        <p class="text-xs mb-4 mt-1">Hệ thống chưa ghi nhận lượt di trú nào chạy hoặc logs đã bị xóa.</p>
+                        <form asp-controller="Migration" asp-action="Start" method="post">
+                            <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);">
+                                <i class="bi bi-rocket-takeoff me-1"></i> Bắt đầu di trú ngay
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

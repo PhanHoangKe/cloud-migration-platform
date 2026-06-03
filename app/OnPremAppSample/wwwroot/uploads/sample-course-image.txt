@@ -1,0 +1,5 @@
+[EduCourse Sample Image Asset]
+This file simulates a local image asset for Course.
+Path: wwwroot/uploads/sample-course-image.txt
+State: On-premises local filesystem dependency.
+Migration Target: AWS S3 Bucket (s3://educourse-assets-bucket/)

@@ -14,7 +14,7 @@
     <!-- Top Result Banner -->
     <div class="row mb-4">
         <div class="col-12">
-            @if (Model.IsSuccess)
+            @if (Model.Status == "COMPLETED" && Model.IsSuccess)
             {
                 <div class="card bg-success bg-opacity-10 border border-success border-opacity-25 rounded-4 p-4 shadow-sm">
                     <div class="d-flex align-items-center gap-3">
@@ -22,13 +22,13 @@
                             <i class="bi bi-check-circle-fill"></i>
                         </div>
                         <div>
-                            <h3 class="text-success font-bold mb-1" style="font-weight: 700;">Chuyển đổi thành công!</h3>
+                            <h3 class="text-success font-bold mb-1" style="font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif;">Chuyển đổi thành công!</h3>
                             <p class="text-secondary mb-0">Ứng dụng đã được đóng gói và di trú thành công lên giả lập AWS Cloud (LocalStack) bằng cấu hình Terraform.</p>
                         </div>
                     </div>
                 </div>
             }
-            else
+            else if (Model.Status == "FAILED" || (!Model.IsSuccess && Model.Status != "STARTED" && Model.Status != "RUNNING" && !Model.Status.StartsWith("MIGRATION_")))
             {
                 <div class="card bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-4 p-4 shadow-sm">
                     <div class="d-flex align-items-center gap-3">
@@ -36,12 +36,72 @@
                             <i class="bi bi-exclamation-triangle-fill"></i>
                         </div>
                         <div>
-                            <h3 class="text-danger font-bold mb-1" style="font-weight: 700;">Chuyển đổi thất bại!</h3>
+                            <h3 class="text-danger font-bold mb-1" style="font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif;">Chuyển đổi thất bại!</h3>
                             <p class="text-secondary mb-0">Hệ thống phát hiện lỗi trong quá trình đóng gói dữ liệu hoặc kết nối tới tài nguyên cloud.</p>
                         </div>
                     </div>
                 </div>
             }
+            else
+            {
+                <div class="card bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-4 p-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; font-size: 28px; flex-shrink: 0;">
+                            <span class="spinner-border text-white" role="status" style="width: 24px; height: 24px; border-width: 3px;"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-primary font-bold mb-1" style="font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif;">Đang thực hiện di trú ứng dụng...</h3>
+                            <p class="text-secondary mb-0">Vui lòng đợi trong giây lát. Hệ thống đang tiến hành đóng gói mã nguồn, kiểm thử Lambda, xuất database và cấu hình AWS.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Real-time Progress Bar Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card border border-primary border-opacity-15">
+                <div class="card-header-custom border-bottom pb-2 mb-3">
+                    <h5 class="card-title-custom text-indigo">
+                        <i class="bi bi-activity me-2"></i> Tiến trình di trú tổng thể (Overall Progress)
+                    </h5>
+                    <span class="status-badge info" id="overallStatusBadge">@Model.Status</span>
+                </div>
+                
+                <div class="row align-items-center py-2">
+                    <div class="col-md-2 text-center mb-3 mb-md-0">
+                        <h2 class="display-6 font-bold text-indigo mb-0" id="progressPercentText" style="font-weight: 800;">
+                            @(Model.Status == "COMPLETED" ? "100%" : "10%")
+                        </h2>
+                        <span class="text-xxs text-muted text-uppercase font-semibold">Hoàn thành</span>
+                    </div>
+                    <div class="col-md-10">
+                        <div class="progress mb-2" style="height: 12px; border-radius: 6px;">
+                            @{
+                                string initialPercent = Model.Status == "COMPLETED" ? "100%" : "10%";
+                                string progressBg = Model.Status == "COMPLETED" ? "bg-success" : (Model.Status == "FAILED" ? "bg-danger" : "bg-indigo progress-bar-striped progress-bar-animated");
+                            }
+                            <div class="progress-bar @progressBg" id="progressBar" role="progressbar" style="width: @initialPercent"></div>
+                        </div>
+                        <p class="text-xs text-secondary mb-0" id="progressStatusMessage">
+                            @if (Model.Status == "COMPLETED")
+                            {
+                                <span>Quá trình di trú đã hoàn tất thành công!</span>
+                            }
+                            else if (Model.Status == "FAILED")
+                            {
+                                <span>Đã xảy ra lỗi trong tiến trình di trú.</span>
+                            }
+                            else
+                            {
+                                <span>Hệ thống đang chuẩn bị tài nguyên và phân tích mã nguồn...</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -82,25 +142,25 @@
                     <h5 class="card-title-custom text-indigo">
                         <i class="bi bi-info-circle-fill"></i> Tổng quan tiến trình di trú
                     </h5>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Migration Package</span>
+                    <span class="status-badge neutral">Migration Package</span>
                 </div>
                 
                 <table class="table table-borderless align-middle mb-0 text-sm">
                     <tbody>
                         <tr>
                             <td class="text-muted py-2 w-40">Mã di trú (MigrationId):</td>
-                            <td class="font-monospace text-dark font-semibold py-2">@Model.MigrationId</td>
+                            <td class="font-monospace text-dark font-semibold py-2" style="word-break: break-all;">@Model.MigrationId</td>
                         </tr>
                         <tr>
                             <td class="text-muted py-2">Trạng thái:</td>
                             <td class="py-2">
                                 @if (Model.IsSuccess)
                                 {
-                                    <span class="badge bg-success bg-opacity-10 text-success"><i class="bi bi-cloud-check-fill me-1"></i> COMPLETED</span>
+                                    <span class="status-badge success"><i class="bi bi-cloud-check-fill me-1"></i> COMPLETED</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger bg-opacity-10 text-danger"><i class="bi bi-x-circle-fill me-1"></i> FAILED</span>
+                                    <span class="status-badge danger"><i class="bi bi-x-circle-fill me-1"></i> FAILED</span>
                                 }
                             </td>
                         </tr>
@@ -108,7 +168,7 @@
                             <td class="text-muted py-2">Điểm sẵn sàng (Readiness):</td>
                             <td class="py-2 font-bold text-dark">
                                 @Model.ReadinessScore/100
-                                <div class="progress mt-1" style="height: 6px; width: 120px; border-radius: 3px;">
+                                <div class="progress mt-1.5" style="height: 6px; width: 120px; border-radius: 3px;">
                                     @{
                                         string barColor = Model.ReadinessScore >= 80 ? "bg-success" : (Model.ReadinessScore >= 50 ? "bg-warning" : "bg-danger");
                                     }
@@ -122,66 +182,85 @@
                         </tr>
                         <tr>
                             <td class="text-muted py-2">S3 Bucket đích:</td>
-                            <td class="text-dark font-semibold py-2">@Model.S3BucketName</td>
+                            <td class="text-dark font-semibold py-2" style="word-break: break-all;">@Model.S3BucketName</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <!-- Uploaded Files Catalog -->
-            <div class="dashboard-card">
+            <div class="dashboard-card mb-4">
                 <div class="card-header-custom border-bottom pb-2 mb-3">
                     <h5 class="card-title-custom text-dark text-sm">
                         <i class="bi bi-cloud-arrow-up-fill text-indigo me-2"></i> Danh sách tệp tin đã upload lên S3
                     </h5>
-                    <span class="badge bg-indigo bg-opacity-10 text-indigo">@Model.S3ObjectKeys.Count tệp tin</span>
+                    <span class="status-badge info">@Model.S3ObjectKeys.Count tệp tin</span>
                 </div>
 
                 @if (Model.IsSuccess && Model.S3ObjectKeys.Any())
                 {
-                    <ul class="list-group list-group-flush">
+                    <div class="d-flex flex-column gap-3">
                         @foreach (var key in Model.S3ObjectKeys)
                         {
                             string fileName = System.IO.Path.GetFileName(key);
-                            string fileIcon = "bi-file-earmark-code text-indigo";
+                            string fileIcon = "bi-file-earmark-code text-primary";
                             string fileDesc = "Tệp tin dữ liệu";
+                            string bgIconClass = "primary";
 
                             if (fileName.EndsWith(".zip"))
                             {
-                                fileIcon = "bi-file-earmark-zip text-warning";
+                                fileIcon = "bi-file-earmark-zip";
                                 fileDesc = "Mã nguồn đóng gói (.zip)";
+                                bgIconClass = "warning";
                             }
                             else if (fileName.Contains("database-export"))
                             {
-                                fileIcon = "bi-database-fill-check text-info";
+                                fileIcon = "bi-database-fill-check";
                                 fileDesc = "Bản xuất dữ liệu SQL Server (.json)";
+                                bgIconClass = "success";
                             }
                             else if (fileName.Contains("report"))
                             {
-                                fileIcon = "bi-file-earmark-bar-graph text-success";
-                                fileDesc = "Báo cáo di trú (.json/.html)";
+                                if (fileName.EndsWith(".html"))
+                                {
+                                    fileIcon = "bi-file-earmark-richtext";
+                                    fileDesc = "Báo cáo di trú (.html)";
+                                    bgIconClass = "danger";
+                                }
+                                else
+                                {
+                                    fileIcon = "bi-file-earmark-code";
+                                    fileDesc = "Báo cáo di trú (.json)";
+                                    bgIconClass = "success";
+                                }
                             }
                             else if (fileName.Contains("manifest"))
                             {
-                                fileIcon = "bi-file-earmark-text text-primary";
+                                fileIcon = "bi-file-earmark-text";
                                 fileDesc = "Tệp kê khai di trú (.json)";
+                                bgIconClass = "info";
                             }
 
-                            <li class="list-group-item d-flex align-items-center justify-content-between py-2 px-0 bg-transparent border-bottom">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stat-icon" style="width: 38px; height: 38px; border-radius: 8px; background-color: rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
+                            <div class="file-card">
+                                <div class="file-card-info">
+                                    <div class="stat-icon @bgIconClass" style="width: 40px; height: 40px; font-size: 18px; border-radius: 8px;">
                                         <i class="bi @fileIcon"></i>
                                     </div>
-                                    <div>
-                                        <strong class="text-xs text-dark d-block">@fileName</strong>
-                                        <span class="text-xxs text-muted d-block mb-0.5">@fileDesc</span>
-                                        <code class="text-xxs text-muted" style="font-size: 9px;">s3://@Model.S3BucketName/@key</code>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <strong class="text-sm text-dark d-block" style="font-weight: 700; word-break: break-all;" title="@fileName">@fileName</strong>
+                                        <span class="text-xxs text-muted d-block mb-1">@fileDesc</span>
+                                        <div class="s3-path">s3://@Model.S3BucketName/@key</div>
                                     </div>
                                 </div>
-                                <span class="badge bg-success bg-opacity-10 text-success text-xxs px-2 py-1"><i class="bi bi-cloud-check-fill me-0.5"></i> S3 Uploaded</span>
-                            </li>
+                                <div class="file-card-actions">
+                                    <span class="status-badge success"><i class="bi bi-cloud-check-fill me-1"></i>S3 Uploaded</span>
+                                    <a href="http://localhost:4566/@Model.S3BucketName/@key" target="_blank" class="btn btn-sm btn-outline-primary" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">
+                                        <i class="bi bi-download me-1"></i>Tải về
+                                    </a>
+                                </div>
+                            </div>
                         }
-                    </ul>
+                    </div>
                 }
                 else
                 {
@@ -193,22 +272,22 @@
             </div>
 
             <!-- Database Export Details Card -->
-            <div class="dashboard-card mt-4">
+            <div class="dashboard-card">
                 <div class="card-header-custom border-bottom pb-2 mb-3">
                     <h5 class="card-title-custom text-dark text-sm">
                         <i class="bi bi-database-fill-gear text-indigo me-2"></i> Trạng thái xuất dữ liệu SQL Server
                     </h5>
                     @if (Model.DatabaseExportStatus == "SUCCESS")
                     {
-                        <span class="badge bg-success bg-opacity-10 text-success">SUCCESS</span>
+                        <span class="status-badge success">SUCCESS</span>
                     }
                     else if (Model.DatabaseExportStatus == "FAILED")
                     {
-                        <span class="badge bg-warning bg-opacity-10 text-warning">WARNING / OFFLINE</span>
+                        <span class="status-badge warning">WARNING / OFFLINE</span>
                     }
                     else
                     {
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary">PENDING</span>
+                        <span class="status-badge neutral">PENDING</span>
                     }
                 </div>
 
@@ -238,9 +317,9 @@
 
                     @if (!string.IsNullOrEmpty(Model.DatabaseExportS3Key))
                     {
-                        <div class="mt-3 p-2 bg-light rounded-3 border text-xxs font-monospace" style="overflow-wrap: break-word;">
+                        <div class="mt-3 p-2 bg-light rounded-3 border text-xxs font-monospace">
                             <span class="text-muted d-block font-sans mb-1" style="font-family: sans-serif;">S3 Object Key:</span>
-                            <a href="http://localhost:4566/@Model.S3BucketName/@Model.DatabaseExportS3Key" target="_blank" class="text-indigo text-decoration-none font-semibold">
+                            <a href="http://localhost:4566/@Model.S3BucketName/@Model.DatabaseExportS3Key" target="_blank" class="text-indigo text-decoration-none font-semibold text-break">
                                 s3://@Model.S3BucketName/@Model.DatabaseExportS3Key
                             </a>
                         </div>
@@ -281,132 +360,161 @@
                     </h5>
                 </div>
 
-                <div class="d-flex flex-column gap-3">
+                <div class="d-flex flex-column gap-1">
                     <!-- Step 1 -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("STARTED") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("STARTED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>1</span> }
+                    <div class="progress-step" id="step-PREPARING">
+                        <div class="step-badge @(HasLog("STARTED") ? "bg-success text-white" : "bg-secondary bg-opacity-10 text-muted")">
+                            <span class="step-icon-placeholder">
+                                @if (HasLog("STARTED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>1</span> }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Khởi chạy tiến trình</strong>
-                            <span class="text-xxs text-muted">Bắt đầu tiến trình chuyển đổi và đăng ký mã di trú trong cơ sở dữ liệu logs.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Chuẩn bị di trú</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Đăng ký mã di trú và thiết lập kết nối AWS LocalStack.</span>
                         </div>
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("ASSESSMENT_EXPORTED") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("ASSESSMENT_EXPORTED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>2</span> }
+                    <div class="progress-step" id="step-ASSESSMENT">
+                        <div class="step-badge @(HasLog("ASSESSMENT_EXPORTED") ? "bg-success text-white" : "bg-secondary bg-opacity-10 text-muted")">
+                            <span class="step-icon-placeholder">
+                                @if (HasLog("ASSESSMENT_EXPORTED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>2</span> }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Xuất báo cáo đánh giá nguồn (assessment-report.json)</strong>
-                            <span class="text-xxs text-muted">Chạy dịch vụ phân tích tĩnh mã nguồn và lưu báo cáo đánh giá độ sẵn sàng di trú lên cloud.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Đánh giá mã nguồn (assessment-report.json)</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Phân tích độ sẵn sàng di trú của mã nguồn ứng dụng on-premise.</span>
                         </div>
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("MANIFEST_CREATED") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("MANIFEST_CREATED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>3</span> }
+                    <div class="progress-step" id="step-PACKAGING">
+                        <div class="step-badge @(HasLog("SOURCE_PACKAGED") ? "bg-success text-white" : "bg-secondary bg-opacity-10 text-muted")">
+                            <span class="step-icon-placeholder">
+                                @if (HasLog("SOURCE_PACKAGED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>3</span> }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Khởi tạo tệp manifest di trú (migration-manifest.json)</strong>
-                            <span class="text-xxs text-muted">Định nghĩa cấu hình hạ tầng đích, chiến lược Re-platform và liệt kê danh sách tệp đính kèm.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Đóng gói mã nguồn (source-package.zip)</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Nén mã nguồn ứng dụng loại bỏ các thư mục rác (bin, obj, .git).</span>
                         </div>
                     </div>
 
                     <!-- Step 4 -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("SOURCE_PACKAGED") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("SOURCE_PACKAGED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>4</span> }
+                    <div class="progress-step" id="step-DATABASE_EXPORT">
+                        @{
+                            string dbBadgeClass = Model.DatabaseExportStatus == "SUCCESS" ? "bg-success text-white" : 
+                                                 (Model.DatabaseExportStatus == "FAILED" ? "bg-warning text-white" : "bg-secondary bg-opacity-10 text-muted");
+                        }
+                        <div class="step-badge @dbBadgeClass">
+                            <span class="step-icon-placeholder">
+                                @if (Model.DatabaseExportStatus == "SUCCESS")
+                                {
+                                    <i class="bi bi-check-lg text-white"></i>
+                                }
+                                else if (Model.DatabaseExportStatus == "FAILED")
+                                {
+                                    <i class="bi bi-exclamation-lg text-white"></i>
+                                }
+                                else
+                                {
+                                    <span>4</span>
+                                }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Đóng gói nén mã nguồn (source-package.zip)</strong>
-                            <span class="text-xxs text-muted">Quét đệ quy toàn bộ dự án nguồn, lọc bỏ tệp rác (.git, bin, obj, node_modules) và nén thành gói ZIP.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Xuất dữ liệu SQL Server (database-export.json)</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Kết xuất cấu trúc schema và các dòng dữ liệu của CSDL SQL Server local.</span>
                         </div>
                     </div>
 
-                    <!-- Step 5: Database Export -->
-                    <div class="d-flex align-items-start gap-3">
-                        @{
-                            string dbBadgeClass = Model.DatabaseExportStatus == "SUCCESS" ? "success" : 
-                                                 (Model.DatabaseExportStatus == "FAILED" ? "warning" : "pending");
-                        }
-                        <div class="step-badge @dbBadgeClass" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (Model.DatabaseExportStatus == "SUCCESS")
-                            {
-                                <i class="bi bi-check-lg text-white"></i>
-                            }
-                            else if (Model.DatabaseExportStatus == "FAILED")
-                            {
-                                <i class="bi bi-exclamation-lg text-white"></i>
-                            }
-                            else
-                            {
-                                <span>5</span>
-                            }
+                    <!-- Step 5 -->
+                    <div class="progress-step" id="step-UPLOAD_TO_S3">
+                        <div class="step-badge @(HasLog("UPLOADED_TO_S3") ? "bg-success text-white" : "bg-secondary bg-opacity-10 text-muted")">
+                            <span class="step-icon-placeholder">
+                                @if (HasLog("UPLOADED_TO_S3")) { <i class="bi bi-check-lg text-white"></i> } else { <span>5</span> }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Xuất dữ liệu SQL Server (database-export.json)</strong>
-                            <span class="text-xxs text-muted">Kết nối cơ sở dữ liệu On-premise, xuất thông tin bảng và trích xuất mẫu dữ liệu 20 bản ghi.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Tải gói di trú lên Amazon S3</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Tải các tệp Zip nguồn, manifest và database-export lên S3 bucket.</span>
                         </div>
                     </div>
 
                     <!-- Step 6 -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("UPLOADED_TO_S3") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("UPLOADED_TO_S3")) { <i class="bi bi-check-lg text-white"></i> } else { <span>6</span> }
+                    <div class="progress-step" id="step-SELF_TEST">
+                        @{
+                            string testBadgeClass = isSelfTestPassed ? "bg-success text-white" : (isSelfTestFailed ? "bg-danger text-white" : "bg-secondary bg-opacity-10 text-muted");
+                        }
+                        <div class="step-badge @testBadgeClass">
+                            <span class="step-icon-placeholder">
+                                @if (isSelfTestPassed)
+                                {
+                                    <i class="bi bi-check-lg text-white"></i>
+                                }
+                                else if (isSelfTestFailed)
+                                {
+                                    <i class="bi bi-x-lg text-white"></i>
+                                }
+                                else
+                                {
+                                    <span>6</span>
+                                }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Upload gói di trú lên Amazon S3</strong>
-                            <span class="text-xxs text-muted">Đẩy đồng thời các tệp tin đóng gói lên AWS S3 bucket giả lập theo cấu trúc thư mục của MigrationId.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Kiểm thử liên kết (AWS Lambda Self-test)</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Kích hoạt Lambda function chạy tự động để kiểm thử khả năng kết nối cơ sở dữ liệu.</span>
                         </div>
                     </div>
 
                     <!-- Step 7 -->
-                    <div class="d-flex align-items-start gap-3">
-                        @{
-                            string testBadgeClass = isSelfTestPassed ? "success" : (isSelfTestFailed ? "danger" : "pending");
-                        }
-                        <div class="step-badge @testBadgeClass" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (isSelfTestPassed)
-                            {
-                                <i class="bi bi-check-lg text-white"></i>
-                            }
-                            else if (isSelfTestFailed)
-                            {
-                                <i class="bi bi-x-lg text-white"></i>
-                            }
-                            else
-                            {
-                                <span>7</span>
-                            }
+                    <div class="progress-step" id="step-REPORT">
+                        <div class="step-badge @(HasLog("REPORT_GENERATED") ? "bg-success text-white" : "bg-secondary bg-opacity-10 text-muted")">
+                            <span class="step-icon-placeholder">
+                                @if (HasLog("REPORT_GENERATED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>7</span> }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Kiểm thử liên kết ứng dụng (AWS Lambda Self-test)</strong>
-                            <span class="text-xxs text-muted">Gọi Lambda function tự động thực hiện truy vấn kiểm tra kết nối CSDL và ghi nhận logs.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Khởi tạo báo cáo di trú (HTML & JSON)</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Tự động kết xuất báo cáo di trú chi tiết và tải lên S3 lưu trữ.</span>
                         </div>
                     </div>
 
                     <!-- Step 8 -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("REPORT_GENERATED") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("REPORT_GENERATED")) { <i class="bi bi-check-lg text-white"></i> } else { <span>8</span> }
+                    <div class="progress-step" id="step-COMPLETED">
+                        <div class="step-badge @(Model.Status == "COMPLETED" ? "bg-success text-white" : "bg-secondary bg-opacity-10 text-muted")">
+                            <span class="step-icon-placeholder">
+                                @if (Model.Status == "COMPLETED") { <i class="bi bi-check-lg text-white"></i> } else { <span>8</span> }
+                            </span>
                         </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Khởi tạo báo cáo di trú (migration-report)</strong>
-                            <span class="text-xxs text-muted">Tổng hợp thông số đánh giá nguồn, kích thước mã nguồn đóng gói, so sánh kiến trúc và chi phí vận hành.</span>
-                        </div>
-                    </div>
-
-                    <!-- Step 9 -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="step-badge @(HasLog("REPORT_UPLOADED_TO_S3") ? "success" : "pending")" style="width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
-                            @if (HasLog("REPORT_UPLOADED_TO_S3")) { <i class="bi bi-check-lg text-white"></i> } else { <span>9</span> }
-                        </div>
-                        <div>
-                            <strong class="text-xs text-dark d-block">Tải báo cáo di trú lên Amazon S3</strong>
-                            <span class="text-xxs text-muted">Tải cả hai tệp tin báo cáo định dạng JSON và HTML lên thư mục lưu trữ S3 tương ứng.</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-xs text-dark d-block">Hoàn tất chuyển đổi</strong>
+                                <span class="text-xxs text-muted step-time"></span>
+                            </div>
+                            <span class="text-xxs text-muted">Ghi nhận trạng thái kết thúc thành công lên hệ thống giám sát.</span>
                         </div>
                     </div>
                 </div>
@@ -420,15 +528,15 @@
                     </h5>
                     @if (isSelfTestPassed)
                     {
-                        <span class="badge bg-success bg-opacity-10 text-success">PASSED</span>
+                        <span class="status-badge success">PASSED</span>
                     }
                     else if (isSelfTestFailed)
                     {
-                        <span class="badge bg-danger bg-opacity-10 text-danger">FAILED</span>
+                        <span class="status-badge danger">FAILED</span>
                     }
                     else
                     {
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary">PENDING</span>
+                        <span class="status-badge neutral">PENDING</span>
                     }
                 </div>
 
@@ -456,35 +564,35 @@
                         <h5 class="card-title-custom text-success">
                             <i class="bi bi-file-earmark-pdf-fill me-2"></i> Báo cáo kết quả chuyển đổi (Migration Report)
                         </h5>
-                        <span class="badge bg-success bg-opacity-10 text-success">Generated</span>
+                        <span class="status-badge success">Generated</span>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-md-7">
                             <p class="text-muted text-xs mb-2">Báo cáo kết quả chi tiết đã được xuất bản tự động dưới dạng JSON và HTML tĩnh để phục vụ lưu trữ học thuật:</p>
                             <div class="d-flex flex-column gap-2">
-                                <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center" style="font-size: 13px;">
-                                    <div class="d-flex align-items-center gap-2">
+                                <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size: 13px;">
+                                    <div class="d-flex align-items-center gap-2 min-width-0" style="flex: 1;">
                                         <i class="bi bi-filetype-json text-primary fs-4"></i>
-                                        <div>
+                                        <div style="min-width: 0; flex: 1;">
                                             <span class="font-semibold text-dark d-block">migration-report.json</span>
-                                            <code class="text-xxs text-muted">s3://@Model.S3BucketName/@Model.ReportJsonS3Key</code>
+                                            <div class="s3-path">s3://@Model.S3BucketName/@Model.ReportJsonS3Key</div>
                                         </div>
                                     </div>
-                                    <a href="http://localhost:4566/@Model.S3BucketName/@Model.ReportJsonS3Key" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2 rounded-2 text-xxs" style="font-size: 11px;">
+                                    <a href="http://localhost:4566/@Model.S3BucketName/@Model.ReportJsonS3Key" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2 rounded-2 text-xxs" style="font-size: 11px; font-weight: 600;">
                                         <i class="bi bi-download me-1"></i> Tải về JSON
                                     </a>
                                 </div>
 
-                                <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center" style="font-size: 13px;">
-                                    <div class="d-flex align-items-center gap-2">
+                                <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size: 13px;">
+                                    <div class="d-flex align-items-center gap-2 min-width-0" style="flex: 1;">
                                         <i class="bi bi-filetype-html text-danger fs-4"></i>
-                                        <div>
+                                        <div style="min-width: 0; flex: 1;">
                                             <span class="font-semibold text-dark d-block">migration-report.html</span>
-                                            <code class="text-xxs text-muted">s3://@Model.S3BucketName/@Model.ReportHtmlS3Key</code>
+                                            <div class="s3-path">s3://@Model.S3BucketName/@Model.ReportHtmlS3Key</div>
                                         </div>
                                     </div>
-                                    <a href="http://localhost:4566/@Model.S3BucketName/@Model.ReportHtmlS3Key" target="_blank" class="btn btn-sm btn-outline-danger py-1 px-2 rounded-2 text-xxs" style="font-size: 11px;">
+                                    <a href="http://localhost:4566/@Model.S3BucketName/@Model.ReportHtmlS3Key" target="_blank" class="btn btn-sm btn-outline-danger py-1 px-2 rounded-2 text-xxs" style="font-size: 11px; font-weight: 600;">
                                         <i class="bi bi-eye me-1"></i> Xem báo cáo HTML
                                     </a>
                                 </div>
@@ -564,3 +672,132 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var migrationId = "@Model.MigrationId";
+        var currentStatus = "@Model.Status";
+        var isFinished = currentStatus === "COMPLETED" || currentStatus === "FAILED";
+        
+        function updateUI(data) {
+            // Update Progress percentage
+            var percent = data.progressPercent;
+            var progressBar = document.getElementById("progressBar");
+            var percentText = document.getElementById("progressPercentText");
+            var overallBadge = document.getElementById("overallStatusBadge");
+            var statusMsg = document.getElementById("progressStatusMessage");
+            
+            if (progressBar) {
+                progressBar.style.width = percent + "%";
+                progressBar.setAttribute("aria-valuenow", percent);
+                if (data.currentStatus === "COMPLETED") {
+                    progressBar.className = "progress-bar bg-success";
+                } else if (data.currentStatus === "FAILED") {
+                    progressBar.className = "progress-bar bg-danger";
+                } else {
+                    progressBar.className = "progress-bar bg-indigo progress-bar-striped progress-bar-animated";
+                }
+            }
+            
+            if (percentText) {
+                percentText.innerText = percent + "%";
+            }
+            
+            if (overallBadge) {
+                overallBadge.innerText = data.currentStatus;
+                overallBadge.className = "status-badge";
+                if (data.currentStatus === "COMPLETED") {
+                    overallBadge.classList.add("success");
+                } else if (data.currentStatus === "FAILED") {
+                    overallBadge.classList.add("danger");
+                } else {
+                    overallBadge.classList.add("info");
+                }
+            }
+            
+            if (statusMsg) {
+                if (data.currentStatus === "COMPLETED") {
+                    statusMsg.innerText = "Quá trình di trú đã hoàn tất thành công!";
+                } else if (data.currentStatus === "FAILED") {
+                    statusMsg.innerText = "Đã xảy ra lỗi trong tiến trình di trú.";
+                } else {
+                    statusMsg.innerText = "Đang thực hiện bước: " + data.currentStatus + "...";
+                }
+            }
+            
+            // Update steps
+            if (data.steps && data.steps.length > 0) {
+                data.steps.forEach(function (step, idx) {
+                    var stepElem = document.getElementById("step-" + step.stepName);
+                    if (stepElem) {
+                        var badge = stepElem.querySelector(".step-badge");
+                        var placeholder = stepElem.querySelector(".step-icon-placeholder");
+                        var timeSpan = stepElem.querySelector(".step-time");
+                        
+                        if (badge && placeholder) {
+                            badge.className = "step-badge";
+                            if (step.status === "COMPLETED") {
+                                badge.classList.add("bg-success", "text-white");
+                                placeholder.innerHTML = '<i class="bi bi-check-lg text-white"></i>';
+                            } else if (step.status === "WARNING") {
+                                badge.classList.add("bg-warning", "text-white");
+                                placeholder.innerHTML = '<i class="bi bi-exclamation-lg text-white"></i>';
+                            } else if (step.status === "FAILED") {
+                                badge.classList.add("bg-danger", "text-white");
+                                placeholder.innerHTML = '<i class="bi bi-x-lg text-white"></i>';
+                            } else if (step.status === "RUNNING") {
+                                badge.classList.add("bg-indigo", "text-white");
+                                placeholder.innerHTML = '<span class="spinner-border spinner-border-sm text-white" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span>';
+                            } else {
+                                badge.classList.add("bg-secondary", "bg-opacity-10", "text-muted");
+                                placeholder.innerHTML = '<span>' + (idx + 1) + '</span>';
+                            }
+                        }
+                        
+                        if (timeSpan && step.completedAt) {
+                            var date = new Date(step.completedAt);
+                            timeSpan.innerText = date.toLocaleTimeString();
+                        }
+                    }
+                });
+            }
+            
+            // If finished, wait a bit and refresh page to show reports and logs
+            if (data.currentStatus === "COMPLETED" || data.currentStatus === "FAILED") {
+                if (!isFinished) {
+                    isFinished = true;
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 2500);
+                }
+            }
+        }
+        
+        function poll() {
+            if (isFinished) return;
+            
+            fetch("/Migration/Progress/" + migrationId)
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error("Network response was not ok.");
+                })
+                .then(function (data) {
+                    updateUI(data);
+                })
+                .catch(function (error) {
+                    console.error("Lỗi polling progress:", error);
+                });
+            
+            if (!isFinished) {
+                setTimeout(poll, 1500);
+            }
+        }
+        
+        // Trigger poll immediately if not finished
+        if (!isFinished) {
+            poll();
+        }
+    });
+</script>

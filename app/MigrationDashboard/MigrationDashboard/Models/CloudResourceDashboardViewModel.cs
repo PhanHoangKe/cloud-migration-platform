@@ -17,6 +17,8 @@ public class CloudResourceDashboardViewModel
     public string LatestRestoreStatus { get; set; } = "N/A";
     public bool RestoreAvailable { get; set; }
     public int SecurityComplianceScore { get; set; }
+    public int CloudHealthScore { get; set; } = 0;
+    public string CloudHealthStatus { get; set; } = "Unknown";
 
     public bool IsLocalStackAvailable { get; set; } = true;
     public string? S3ErrorMessage { get; set; }
