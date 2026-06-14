@@ -107,12 +107,25 @@ public class MigrationService : IMigrationService
         // 1. Read configurations
         var localStackConfig = _configuration.GetSection("LocalStack");
         var serviceUrl = localStackConfig["ServiceUrl"] ?? "http://localhost:4566";
-        var region = localStackConfig["Region"] ?? "ap-southeast-1";
+        var region = DisasterState.CurrentRegion;
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
+        
         var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-kedep";
         var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
         var lambdaName = localStackConfig["SelfTestLambdaName"] ?? "cloud-migration-self-test-kedep";
+
+        if (region == "ap-northeast-1")
+        {
+            bucketName = "cloud-migration-backup-kedep-tokyo";
+            tableName = "cloud-migration-logs-kedep-tokyo";
+            lambdaName = "cloud-migration-self-test-kedep-tokyo";
+        }
+
+        if (DisasterState.IsSingaporeDown && region == "ap-southeast-1")
+        {
+            throw new Exception("CRITICAL: Không thể thực hiện chuyển đổi do Vùng Singapore (ap-southeast-1) đang bị sập kết nối diện rộng!");
+        }
 
         var result = new MigrationResultViewModel
         {

@@ -38,6 +38,30 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+    if (DisasterState.IsSingaporeDown && !DisasterState.IsFailedOver)
+    {
+        bool isAsset = path.StartsWith("/css", StringComparison.OrdinalIgnoreCase) ||
+                       path.StartsWith("/js", StringComparison.OrdinalIgnoreCase) ||
+                       path.StartsWith("/lib", StringComparison.OrdinalIgnoreCase) ||
+                       path.StartsWith("/favicon.ico", StringComparison.OrdinalIgnoreCase) ||
+                       path.Contains("bootstrap", StringComparison.OrdinalIgnoreCase) ||
+                       path.Contains("chart", StringComparison.OrdinalIgnoreCase) ||
+                       path.Contains("MigrationDashboard.styles.css", StringComparison.OrdinalIgnoreCase);
+
+        bool isDrController = path.StartsWith("/DisasterRecovery", StringComparison.OrdinalIgnoreCase);
+
+        if (!isAsset && !isDrController)
+        {
+            context.Response.Redirect("/DisasterRecovery");
+            return;
+        }
+    }
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapStaticAssets();

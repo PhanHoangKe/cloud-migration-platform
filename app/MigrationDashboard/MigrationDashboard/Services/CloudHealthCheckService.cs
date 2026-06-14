@@ -27,12 +27,20 @@ public class CloudHealthCheckService : ICloudHealthCheckService
     {
         var localStackConfig = _configuration.GetSection("LocalStack");
         var serviceUrl = localStackConfig["ServiceUrl"] ?? "http://localhost:4566";
-        var region = localStackConfig["Region"] ?? "ap-southeast-1";
+        var region = DisasterState.CurrentRegion;
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
+        
         var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-kedep";
         var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
         var lambdaName = localStackConfig["SelfTestLambdaName"] ?? "cloud-migration-self-test-kedep";
+
+        if (region == "ap-northeast-1")
+        {
+            bucketName = "cloud-migration-backup-kedep-tokyo";
+            tableName = "cloud-migration-logs-kedep-tokyo";
+            lambdaName = "cloud-migration-self-test-kedep-tokyo";
+        }
 
         var viewModel = new CloudHealthCheckViewModel
         {
@@ -94,6 +102,32 @@ public class CloudHealthCheckService : ICloudHealthCheckService
             Recommendation = "Check credentials configuration or DynamoDB table schema"
         };
 
+        if (DisasterState.IsSingaporeDown && region == "ap-southeast-1")
+        {
+            itemGateway.Status = "Critical";
+            itemGateway.StatusText = "Singapore Down";
+            itemGateway.Details = "CRITICAL: Region Singapore (ap-southeast-1) is DOWN! App is offline!";
+            itemGateway.Recommendation = "Đi đến Phòng điều hành khẩn cấp (Disaster Recovery Command Center) để kích hoạt Failover sang Tokyo.";
+
+            string failMsg = "Vùng Singapore (ap-southeast-1) đã ngừng hoạt động.";
+            itemBucket.Status = "Critical"; itemBucket.StatusText = "Offline"; itemBucket.Details = failMsg;
+            itemTable.Status = "Critical"; itemTable.StatusText = "Offline"; itemTable.Details = failMsg;
+            itemLambda.Status = "Critical"; itemLambda.StatusText = "Offline"; itemLambda.Details = failMsg;
+            itemS3Perm.Status = "Critical"; itemS3Perm.StatusText = "Offline"; itemS3Perm.Details = failMsg;
+            itemDynamoPerm.Status = "Critical"; itemDynamoPerm.StatusText = "Offline"; itemDynamoPerm.Details = failMsg;
+
+            viewModel.Items.Add(itemGateway);
+            viewModel.Items.Add(itemBucket);
+            viewModel.Items.Add(itemTable);
+            viewModel.Items.Add(itemLambda);
+            viewModel.Items.Add(itemS3Perm);
+            viewModel.Items.Add(itemDynamoPerm);
+
+            viewModel.HealthScore = 0;
+            viewModel.OverallStatus = "Critical";
+            return viewModel;
+        }
+
         // Step 1: Check LocalStack Gateway Ping
         bool isGatewayConnected = false;
         try
@@ -123,15 +157,33 @@ public class CloudHealthCheckService : ICloudHealthCheckService
             itemGateway.Details = $"Connection failed: {ex.Message}";
         }
 
-        // If Gateway is offline, propagate failure to other services
+        // If Gateway is offline, propagate failure to other services unless we are in Tokyo under DR failover
         if (itemGateway.Status == "Critical")
         {
-            string failMsg = "Cannot verify because LocalStack Gateway is offline.";
-            itemBucket.Status = "Critical"; itemBucket.StatusText = "Offline"; itemBucket.Details = failMsg;
-            itemTable.Status = "Critical"; itemTable.StatusText = "Offline"; itemTable.Details = failMsg;
-            itemLambda.Status = "Critical"; itemLambda.StatusText = "Offline"; itemLambda.Details = failMsg;
-            itemS3Perm.Status = "Critical"; itemS3Perm.StatusText = "Offline"; itemS3Perm.Details = failMsg;
-            itemDynamoPerm.Status = "Critical"; itemDynamoPerm.StatusText = "Offline"; itemDynamoPerm.Details = failMsg;
+            if (DisasterState.IsFailedOver && region == "ap-northeast-1")
+            {
+                // Override gateway to mock healthy for DR demo
+                itemGateway.Status = "Healthy";
+                itemGateway.StatusText = "Active (DR Mock)";
+                itemGateway.Details = "LocalStack Gateway is simulated active for Tokyo Region failover demo.";
+                itemGateway.Recommendation = string.Empty;
+                
+                // Set the rest to Healthy
+                itemBucket.Status = "Healthy"; itemBucket.StatusText = "Active (DR Mock)"; itemBucket.Details = $"Bucket '{bucketName}' hoạt động bình thường trong chế độ Phục hồi Thảm họa."; itemBucket.Recommendation = string.Empty;
+                itemTable.Status = "Healthy"; itemTable.StatusText = "Active (DR Mock)"; itemTable.Details = $"Bảng logs '{tableName}' đã sẵn sàng nhận dữ liệu tại vùng Tokyo."; itemTable.Recommendation = string.Empty;
+                itemLambda.Status = "Healthy"; itemLambda.StatusText = "Active (DR Mock)"; itemLambda.Details = $"Lambda kiểm thử tự động '{lambdaName}' sẵn sàng kích hoạt."; itemLambda.Recommendation = string.Empty;
+                itemS3Perm.Status = "Healthy"; itemS3Perm.StatusText = "Granted (DR Mock)"; itemS3Perm.Details = "Quyền truy cập danh sách bucket đã được phê duyệt cho vùng Tokyo."; itemS3Perm.Recommendation = string.Empty;
+                itemDynamoPerm.Status = "Healthy"; itemDynamoPerm.StatusText = "Granted (DR Mock)"; itemDynamoPerm.Details = "Quyền đọc/ghi logs hoạt động tốt trên vùng Tokyo."; itemDynamoPerm.Recommendation = string.Empty;
+            }
+            else
+            {
+                string failMsg = "Cannot verify because LocalStack Gateway is offline.";
+                itemBucket.Status = "Critical"; itemBucket.StatusText = "Offline"; itemBucket.Details = failMsg;
+                itemTable.Status = "Critical"; itemTable.StatusText = "Offline"; itemTable.Details = failMsg;
+                itemLambda.Status = "Critical"; itemLambda.StatusText = "Offline"; itemLambda.Details = failMsg;
+                itemS3Perm.Status = "Critical"; itemS3Perm.StatusText = "Offline"; itemS3Perm.Details = failMsg;
+                itemDynamoPerm.Status = "Critical"; itemDynamoPerm.StatusText = "Offline"; itemDynamoPerm.Details = failMsg;
+            }
         }
         else
         {
@@ -159,26 +211,34 @@ public class CloudHealthCheckService : ICloudHealthCheckService
                 itemS3Perm.Details = $"List privilege OK. Listed {s3Response.KeyCount} object(s).";
                 itemS3Perm.Recommendation = string.Empty;
             }
-            catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound || ex.ErrorCode == "NoSuchBucket")
-            {
-                itemBucket.Status = "Critical";
-                itemBucket.StatusText = "Missing";
-                itemBucket.Details = $"Bucket '{bucketName}' does not exist on LocalStack.";
-
-                itemS3Perm.Status = "Critical";
-                itemS3Perm.StatusText = "Skipped";
-                itemS3Perm.Details = "Bucket does not exist, skipping permission check.";
-            }
             catch (Exception ex)
             {
-                // S3 endpoint replied, so localstack is up but list failed (e.g. invalid credentials or permission warning)
-                itemBucket.Status = "Warning";
-                itemBucket.StatusText = "Restricted";
-                itemBucket.Details = $"S3 response failed: {ex.Message}";
+                if (DisasterState.IsFailedOver && region == "ap-northeast-1")
+                {
+                    itemBucket.Status = "Healthy";
+                    itemBucket.StatusText = "Active (DR Mock)";
+                    itemBucket.Details = $"Bucket '{bucketName}' hoạt động bình thường trong chế độ Phục hồi Thảm họa.";
+                    itemBucket.Recommendation = string.Empty;
 
-                itemS3Perm.Status = "Warning";
-                itemS3Perm.StatusText = "Restricted";
-                itemS3Perm.Details = $"List operation failed: {ex.Message}";
+                    itemS3Perm.Status = "Healthy";
+                    itemS3Perm.StatusText = "Granted (DR Mock)";
+                    itemS3Perm.Details = "Quyền truy cập danh sách bucket đã được phê duyệt cho vùng Tokyo.";
+                    itemS3Perm.Recommendation = string.Empty;
+                }
+                else
+                {
+                    itemBucket.Status = (ex is AmazonS3Exception s3Ex && (s3Ex.StatusCode == System.Net.HttpStatusCode.NotFound || s3Ex.ErrorCode == "NoSuchBucket")) ? "Critical" : "Warning";
+                    itemBucket.StatusText = (ex is AmazonS3Exception s3Ex2 && (s3Ex2.StatusCode == System.Net.HttpStatusCode.NotFound || s3Ex2.ErrorCode == "NoSuchBucket")) ? "Missing" : "Restricted";
+                    itemBucket.Details = (ex is AmazonS3Exception s3Ex3 && (s3Ex3.StatusCode == System.Net.HttpStatusCode.NotFound || s3Ex3.ErrorCode == "NoSuchBucket")) 
+                        ? $"Bucket '{bucketName}' does not exist on LocalStack." 
+                        : $"S3 response failed: {ex.Message}";
+
+                    itemS3Perm.Status = itemBucket.Status;
+                    itemS3Perm.StatusText = itemBucket.Status == "Critical" ? "Skipped" : "Restricted";
+                    itemS3Perm.Details = itemBucket.Status == "Critical" 
+                        ? "Bucket does not exist, skipping permission check." 
+                        : $"List operation failed: {ex.Message}";
+                }
             }
 
             // Step 4: Check DynamoDB Logs Table Existence
@@ -203,17 +263,24 @@ public class CloudHealthCheckService : ICloudHealthCheckService
                     itemTable.Details = $"Table exists but status is: {tableStatus}.";
                 }
             }
-            catch (Amazon.DynamoDBv2.Model.ResourceNotFoundException)
-            {
-                itemTable.Status = "Critical";
-                itemTable.StatusText = "Missing";
-                itemTable.Details = $"Table '{tableName}' does not exist on LocalStack.";
-            }
             catch (Exception ex)
             {
-                itemTable.Status = "Critical";
-                itemTable.StatusText = "Error";
-                itemTable.Details = $"Verification error: {ex.Message}";
+                if (DisasterState.IsFailedOver && region == "ap-northeast-1")
+                {
+                    tableExists = true;
+                    itemTable.Status = "Healthy";
+                    itemTable.StatusText = "Active (DR Mock)";
+                    itemTable.Details = $"Bảng logs '{tableName}' đã sẵn sàng nhận dữ liệu tại vùng Tokyo.";
+                    itemTable.Recommendation = string.Empty;
+                }
+                else
+                {
+                    itemTable.Status = "Critical";
+                    itemTable.StatusText = (ex is Amazon.DynamoDBv2.Model.ResourceNotFoundException) ? "Missing" : "Error";
+                    itemTable.Details = (ex is Amazon.DynamoDBv2.Model.ResourceNotFoundException) 
+                        ? $"Table '{tableName}' does not exist on LocalStack." 
+                        : $"Verification error: {ex.Message}";
+                }
             }
 
             // Step 5: Check DynamoDB Read Permission
@@ -221,17 +288,37 @@ public class CloudHealthCheckService : ICloudHealthCheckService
             {
                 try
                 {
-                    var scanResponse = await dynamoClient.ScanAsync(new ScanRequest { TableName = tableName, Limit = 1 });
-                    itemDynamoPerm.Status = "Healthy";
-                    itemDynamoPerm.StatusText = "Granted";
-                    itemDynamoPerm.Details = "Scan/Read operation completed successfully.";
-                    itemDynamoPerm.Recommendation = string.Empty;
+                    if (DisasterState.IsFailedOver && region == "ap-northeast-1" && itemTable.StatusText == "Active (DR Mock)")
+                    {
+                        itemDynamoPerm.Status = "Healthy";
+                        itemDynamoPerm.StatusText = "Granted (DR Mock)";
+                        itemDynamoPerm.Details = "Quyền đọc/ghi logs hoạt động tốt trên vùng Tokyo.";
+                        itemDynamoPerm.Recommendation = string.Empty;
+                    }
+                    else
+                    {
+                        var scanResponse = await dynamoClient.ScanAsync(new ScanRequest { TableName = tableName, Limit = 1 });
+                        itemDynamoPerm.Status = "Healthy";
+                        itemDynamoPerm.StatusText = "Granted";
+                        itemDynamoPerm.Details = "Scan/Read operation completed successfully.";
+                        itemDynamoPerm.Recommendation = string.Empty;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    itemDynamoPerm.Status = "Warning";
-                    itemDynamoPerm.StatusText = "Restricted";
-                    itemDynamoPerm.Details = $"Scan operation failed: {ex.Message}";
+                    if (DisasterState.IsFailedOver && region == "ap-northeast-1")
+                    {
+                        itemDynamoPerm.Status = "Healthy";
+                        itemDynamoPerm.StatusText = "Granted (DR Mock)";
+                        itemDynamoPerm.Details = "Quyền đọc/ghi logs hoạt động tốt trên vùng Tokyo.";
+                        itemDynamoPerm.Recommendation = string.Empty;
+                    }
+                    else
+                    {
+                        itemDynamoPerm.Status = "Warning";
+                        itemDynamoPerm.StatusText = "Restricted";
+                        itemDynamoPerm.Details = $"Scan operation failed: {ex.Message}";
+                    }
                 }
             }
             else
@@ -250,17 +337,23 @@ public class CloudHealthCheckService : ICloudHealthCheckService
                 itemLambda.Details = $"Lambda '{lambdaName}' is active (Runtime: {lambdaResponse.Configuration?.Runtime}).";
                 itemLambda.Recommendation = string.Empty;
             }
-            catch (Amazon.Lambda.Model.ResourceNotFoundException)
-            {
-                itemLambda.Status = "Warning";
-                itemLambda.StatusText = "Missing";
-                itemLambda.Details = $"Lambda function '{lambdaName}' is not deployed.";
-            }
             catch (Exception ex)
             {
-                itemLambda.Status = "Warning";
-                itemLambda.StatusText = "Error";
-                itemLambda.Details = $"Verification error: {ex.Message}";
+                if (DisasterState.IsFailedOver && region == "ap-northeast-1")
+                {
+                    itemLambda.Status = "Healthy";
+                    itemLambda.StatusText = "Active (DR Mock)";
+                    itemLambda.Details = $"Lambda kiểm thử tự động '{lambdaName}' sẵn sàng kích hoạt.";
+                    itemLambda.Recommendation = string.Empty;
+                }
+                else
+                {
+                    itemLambda.Status = "Warning";
+                    itemLambda.StatusText = (ex is Amazon.Lambda.Model.ResourceNotFoundException) ? "Missing" : "Error";
+                    itemLambda.Details = (ex is Amazon.Lambda.Model.ResourceNotFoundException) 
+                        ? $"Lambda function '{lambdaName}' is not deployed." 
+                        : $"Verification error: {ex.Message}";
+                }
             }
         }
 

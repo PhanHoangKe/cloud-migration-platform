@@ -37,6 +37,25 @@
     </div>
 }
 
+<!-- Section: Disaster Recovery Emergency Banner -->
+@if (MigrationDashboard.Models.DisasterState.IsSingaporeDown && !MigrationDashboard.Models.DisasterState.IsFailedOver)
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-danger border-0 rounded-3 d-flex align-items-center justify-content-between p-4 mb-0 shadow-lg text-white" role="alert" style="background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1 fw-bold">CẢNH BÁO SỰ CỐ KHẨN CẤP: Vùng Singapore (ap-southeast-1) BỊ SẬP</h5>
+                        <p class="mb-0 text-white-50">Toàn bộ kết nối đến dịch vụ Cloud chính đã ngắt. Hãy truy cập Phòng điều hành khẩn cấp để chuyển vùng cứu hộ sang Tokyo.</p>
+                    </div>
+                </div>
+                <a href="/DisasterRecovery" class="btn btn-light text-danger fw-bold px-4 py-2 shadow-sm">KÍCH HOẠT DR</a>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Section: LocalStack Warning Banner -->
 @if (!Model.IsLocalStackAvailable)
 {
@@ -62,7 +81,7 @@
         <div class="col-xl-6 col-lg-12">
             <div class="hero-card h-100 d-flex flex-column justify-content-between">
                 <div class="hero-content">
-                    <span class="badge bg-primary bg-opacity-25 text-primary mb-3 px-3 py-2 rounded-pill border border-primary border-opacity-50" style="font-weight: 700;">
+                    <span class="badge mb-3 px-3 py-2 rounded-pill" style="font-weight: 700; color: var(--primary-color); background-color: var(--primary-light); border: 1px solid rgba(37, 99, 235, 0.25);">
                         <i class="bi bi-award-fill me-1"></i> Đồ án Điện toán đám mây
                     </span>
                     <h2 class="hero-title">Cloud Migration & Modernization Platform</h2>
@@ -362,6 +381,9 @@
                                 <i class="bi bi-rocket-takeoff me-2"></i> Bắt đầu chuyển đổi
                             </button>
                         </form>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#dbConfigCollapse" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600;">
+                            <i class="bi bi-database-fill-gear me-2"></i> Cấu hình CSDL
+                        </button>
                         <form asp-controller="Restore" asp-action="Start" method="post" id="restoreForm">
                             <button type="submit" class="btn btn-outline-success" id="btnRestoreSimulation" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600;">
                                 <i class="bi bi-shield-shaded me-2"></i> Mô phỏng khôi phục
@@ -372,9 +394,71 @@
                                 <i class="bi bi-arrow-counterclockwise me-2"></i> Hoàn tác di trú (Rollback)
                             </button>
                         </form>
-                        <a href="/Monitoring" class="btn btn-outline-primary" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center;">
+                        <a href="/Monitoring" class="btn btn-outline-secondary" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center;">
                             <i class="bi bi-activity me-2"></i> Giám sát vận hành
                         </a>
+                    </div>
+                </div>
+
+                <!-- Toggleable DB Config Section -->
+                <div class="collapse mb-4" id="dbConfigCollapse">
+                    <div class="card card-body bg-dark border border-secondary border-opacity-25 rounded-3 p-3 text-white">
+                        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2" style="color: var(--primary-color);">
+                            <i class="bi bi-database-gear text-primary"></i> Cấu hình Kết nối CSDL SQL Server (On-premise)
+                        </h6>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-xs fw-semibold mb-1 text-white-50" style="font-size: 11px;">SQL Server Instance / Host</label>
+                                <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" id="dbServer" placeholder="localhost hoặc Localhost\SQLEXPRESS" value="localhost">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-xs fw-semibold mb-1 text-white-50" style="font-size: 11px;">Tên Cơ sở dữ liệu (Database Name)</label>
+                                <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" id="dbName" placeholder="EduFlex" value="EduFlex">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-xs fw-semibold mb-1 text-white-50" style="font-size: 11px;">Kiểu xác thực (Authentication)</label>
+                                <select class="form-select form-select-sm bg-dark text-white border-secondary" id="dbAuthType">
+                                    <option value="windows" selected>Windows Authentication</option>
+                                    <option value="sql">SQL Server Authentication</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-none" id="sqlAuthFields">
+                                <div class="row g-1">
+                                    <div class="col-6">
+                                        <label class="form-label text-xs fw-semibold mb-1 text-white-50" style="font-size: 11px;">Username</label>
+                                        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" id="dbUser" placeholder="sa">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-xs fw-semibold mb-1 text-white-50" style="font-size: 11px;">Password</label>
+                                        <input type="password" class="form-control form-control-sm bg-dark text-white border-secondary" id="dbPassword" placeholder="******">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="dbTrustCert" checked>
+                            <label class="form-check-label text-xs text-white-70" style="font-size: 11.5px;" for="dbTrustCert">
+                                Bỏ qua kiểm tra Chứng chỉ Server (Trust Server Certificate)
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between">
+                            <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" id="btnTestConnection">
+                                <span class="spinner-border spinner-border-sm d-none me-1" id="spinnerTestConn" role="status" aria-hidden="true"></span>
+                                <i class="bi bi-patch-check me-1" id="iconTestConn"></i> Kiểm tra kết nối
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success fw-semibold" id="btnSaveDbConfig">
+                                <i class="bi bi-save me-1"></i> Lưu cấu hình
+                            </button>
+                        </div>
+                        
+                        <!-- Connection Test Result Message -->
+                        <div class="mt-2 text-xs d-none" id="dbTestResult" style="font-size: 11.5px;"></div>
                     </div>
                 </div>
                 
@@ -1038,6 +1122,115 @@
                     logToConsole("Đang cấu hình thông tin xác thực giả lập...", "info");
                     logToConsole("Đang thiết lập tài nguyên đám mây (S3/DynamoDB)...", "tf");
                     logToConsole("Đang kết xuất và tải lên bản sao lưu cơ sở dữ liệu...", "info");
+                });
+            }
+
+            // Database Connection Config UI Logic
+            const dbAuthType = document.getElementById("dbAuthType");
+            const sqlAuthFields = document.getElementById("sqlAuthFields");
+            if (dbAuthType && sqlAuthFields) {
+                dbAuthType.addEventListener("change", function () {
+                    if (this.value === "sql") {
+                        sqlAuthFields.classList.remove("d-none");
+                    } else {
+                        sqlAuthFields.classList.add("d-none");
+                    }
+                });
+            }
+
+            const btnTestConnection = document.getElementById("btnTestConnection");
+            const btnSaveDbConfig = document.getElementById("btnSaveDbConfig");
+            const dbTestResult = document.getElementById("dbTestResult");
+            const spinnerTestConn = document.getElementById("spinnerTestConn");
+            const iconTestConn = document.getElementById("iconTestConn");
+
+            function getDbConfig() {
+                return {
+                    Server: document.getElementById("dbServer").value.trim(),
+                    Database: document.getElementById("dbName").value.trim(),
+                    AuthType: dbAuthType.value,
+                    Username: document.getElementById("dbUser").value.trim(),
+                    Password: document.getElementById("dbPassword").value,
+                    TrustServerCertificate: document.getElementById("dbTrustCert").checked
+                };
+            }
+
+            if (btnTestConnection) {
+                btnTestConnection.addEventListener("click", async function () {
+                    btnTestConnection.disabled = true;
+                    spinnerTestConn.classList.remove("d-none");
+                    iconTestConn.classList.add("d-none");
+                    dbTestResult.classList.add("d-none");
+                    dbTestResult.className = "mt-2 text-xs";
+
+                    try {
+                        const response = await fetch("/Home/TestDbConnection", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(getDbConfig())
+                        });
+                        const result = await response.json();
+                        
+                        dbTestResult.classList.remove("d-none");
+                        if (result.success) {
+                            dbTestResult.innerText = result.message;
+                            dbTestResult.className = "mt-2 text-xs text-success fw-semibold";
+                        } else {
+                            dbTestResult.innerText = result.message;
+                            dbTestResult.className = "mt-2 text-xs text-danger fw-semibold";
+                        }
+                    } catch (err) {
+                        dbTestResult.classList.remove("d-none");
+                        dbTestResult.innerText = "Lỗi hệ thống: Không thể gửi yêu cầu kiểm tra kết nối.";
+                        dbTestResult.className = "mt-2 text-xs text-danger fw-semibold";
+                    } finally {
+                        btnTestConnection.disabled = false;
+                        spinnerTestConn.classList.add("d-none");
+                        iconTestConn.classList.remove("d-none");
+                    }
+                });
+            }
+
+            if (btnSaveDbConfig) {
+                btnSaveDbConfig.addEventListener("click", async function () {
+                    btnSaveDbConfig.disabled = true;
+                    dbTestResult.classList.add("d-none");
+
+                    try {
+                        const response = await fetch("/Home/SaveDbConnection", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(getDbConfig())
+                        });
+                        const result = await response.json();
+                        
+                        dbTestResult.classList.remove("d-none");
+                        if (result.success) {
+                            dbTestResult.innerText = result.message;
+                            dbTestResult.className = "mt-2 text-xs text-success fw-semibold";
+                            
+                            // Hide panel after success
+                            setTimeout(() => {
+                                const collapseEl = document.getElementById('dbConfigCollapse');
+                                if (collapseEl) {
+                                    collapseEl.classList.remove('show');
+                                }
+                            }, 1500);
+                        } else {
+                            dbTestResult.innerText = result.message;
+                            dbTestResult.className = "mt-2 text-xs text-danger fw-semibold";
+                        }
+                    } catch (err) {
+                        dbTestResult.classList.remove("d-none");
+                        dbTestResult.innerText = "Lỗi hệ thống: Không thể lưu cấu hình.";
+                        dbTestResult.className = "mt-2 text-xs text-danger fw-semibold";
+                    } finally {
+                        btnSaveDbConfig.disabled = false;
+                    }
                 });
             }
 

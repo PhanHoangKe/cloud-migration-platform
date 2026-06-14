@@ -1,0 +1,335 @@
+@{
+    ViewData["Title"] = "Disaster Recovery Command Center";
+}
+
+<div class="container-fluid px-4 py-3">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Disaster Recovery</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0 text-white font-weight-bold">Phòng Điều Hành Khẩn Cấp (DR Command Center)</h1>
+        </div>
+        <div>
+            <button id="btnReset" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset Môi Trường
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div id="disasterAlert" class="alert alert-danger d-none align-items-center gap-3 border-0 shadow-lg mb-4" role="alert" style="background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); color: white;">
+        <i class="bi bi-exclamation-triangle-fill fs-2 animate-ping"></i>
+        <div>
+            <h5 class="alert-heading mb-1 fw-bold">SỰ CỐ KHẨN CẤP: Vùng Singapore (ap-southeast-1) đã Ngoại tuyến!</h5>
+            <p class="mb-0 text-white-50">Toàn bộ ứng dụng chính bị sập nguồn hoặc ngắt kết nối. Vui lòng kích hoạt quy trình Phục hồi Khẩn cấp sang vùng Tokyo.</p>
+        </div>
+    </div>
+
+    <div id="successAlert" class="alert alert-success d-none align-items-center gap-3 border-0 shadow-lg mb-4" role="alert" style="background: linear-gradient(135deg, #064e3b 0%, #059669 100%); color: white;">
+        <i class="bi bi-shield-fill-check fs-2"></i>
+        <div>
+            <h5 class="alert-heading mb-1 fw-bold">PHỤC HỒI THÀNH CÔNG (FAILOVER SUCCESSFUL)!</h5>
+            <p class="mb-0 text-white-50">Toàn bộ hạ tầng và dữ liệu (Zero Data Loss) đã được dựng lại và đang chạy ổn định tại Tokyo (ap-northeast-1).</p>
+        </div>
+    </div>
+
+    <!-- Regional Panels -->
+    <div class="row mb-4">
+        <!-- Singapore Region -->
+        <div class="col-lg-5 mb-3 mb-lg-0">
+            <div id="panelSingapore" class="card h-100 border-0 shadow-sm transition-all duration-300" style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+                <div class="card-body p-4 text-center">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-primary px-3 py-2">PRIMARY REGION</span>
+                        <div id="statusSingaporeDot" class="status-indicator-lg healthy"></div>
+                    </div>
+                    
+                    <div class="my-4">
+                        <div class="region-globe-wrapper mb-3">
+                            <i id="iconSingapore" class="bi bi-globe-asia-australia text-primary" style="font-size: 80px;"></i>
+                        </div>
+                        <h3 class="text-white fw-bold mb-1">Singapore</h3>
+                        <span class="text-secondary monospace">ap-southeast-1</span>
+                    </div>
+
+                    <div class="p-3 rounded-3" style="background: rgba(0, 0, 0, 0.2);">
+                        <div class="row">
+                            <div class="col-6 border-end border-secondary">
+                                <small class="text-secondary d-block">Trạng thái</small>
+                                <strong id="statusSingaporeText" class="text-success">HOẠT ĐỘNG</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-secondary d-block">Kết nối S3/DB</small>
+                                <strong id="connSingaporeText" class="text-success">100% ONLINE</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Wire / Action Center -->
+        <div class="col-lg-2 my-auto text-center py-3">
+            <div class="d-none d-lg-block mb-3">
+                <div class="wire-container">
+                    <div id="wireLine" class="wire-line active"></div>
+                </div>
+            </div>
+            <div class="d-flex flex-column gap-2 justify-content-center align-items-center">
+                <button id="btnTrigger" class="btn btn-danger btn-lg w-100 py-3 shadow-lg fw-bold d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-lightning-charge-fill"></i> Đánh Sập Singapore
+                </button>
+                <button id="btnFailover" class="btn btn-warning btn-lg w-100 py-3 shadow-lg fw-bold d-flex align-items-center justify-content-center gap-2" disabled>
+                    <i class="bi bi-shield-fill-plus"></i> Kích Hoạt Phục Hồi
+                </button>
+            </div>
+        </div>
+
+        <!-- Tokyo Region -->
+        <div class="col-lg-5">
+            <div id="panelTokyo" class="card h-100 border-0 shadow-sm transition-all duration-300" style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05) !important; opacity: 0.6;">
+                <div class="card-body p-4 text-center">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-secondary px-3 py-2 text-dark">BACKUP TARGET</span>
+                        <div id="statusTokyoDot" class="status-indicator-lg standby"></div>
+                    </div>
+
+                    <div class="my-4">
+                        <div class="region-globe-wrapper mb-3">
+                            <i id="iconTokyo" class="bi bi-globe text-secondary" style="font-size: 80px;"></i>
+                        </div>
+                        <h3 class="text-white fw-bold mb-1">Tokyo</h3>
+                        <span class="text-secondary monospace">ap-northeast-1</span>
+                    </div>
+
+                    <div class="p-3 rounded-3" style="background: rgba(0, 0, 0, 0.2);">
+                        <div class="row">
+                            <div class="col-6 border-end border-secondary">
+                                <small class="text-secondary d-block">Trạng thái</small>
+                                <strong id="statusTokyoText" class="text-secondary">STANDBY</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-secondary d-block">Kết nối S3/DB</small>
+                                <strong id="connTokyoText" class="text-secondary">CHƯA KHỞI TẠO</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DR Performance KPIs -->
+    <div class="row mb-4">
+        <!-- RTO Card -->
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card border-0 shadow-sm p-4 text-center" style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+                <h6 class="text-secondary text-uppercase mb-2 font-weight-bold" style="font-size: 11px; letter-spacing: 1.5px;">RTO (Recovery Time Objective)</h6>
+                <h2 id="rtoTime" class="text-white fw-bold monospace mb-1">0.0s</h2>
+                <span class="text-muted" style="font-size: 12px;">Thời gian khôi phục hạ tầng & kết nối</span>
+            </div>
+        </div>
+
+        <!-- RPO Card -->
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card border-0 shadow-sm p-4 text-center" style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+                <h6 class="text-secondary text-uppercase mb-2 font-weight-bold" style="font-size: 11px; letter-spacing: 1.5px;">RPO (Recovery Point Objective)</h6>
+                <h2 id="rpoTime" class="text-success fw-bold monospace mb-1">0.00s</h2>
+                <span class="text-muted" style="font-size: 12px;">Độ hao hụt dữ liệu (Zero Data Loss)</span>
+            </div>
+        </div>
+
+        <!-- Health Card -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 text-center" style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+                <h6 class="text-secondary text-uppercase mb-2 font-weight-bold" style="font-size: 11px; letter-spacing: 1.5px;">SYSTEM HEALTH SCORE</h6>
+                <h2 id="healthScore" class="text-success fw-bold monospace mb-1">100%</h2>
+                <span class="text-muted" style="font-size: 12px;">Chỉ số khả dụng toàn hệ thống</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Console Terminal -->
+    <div class="card border-0 shadow-sm" style="background: #090d16; border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+        <div class="card-header d-flex align-items-center justify-content-between bg-dark bg-opacity-50 py-3 border-bottom border-secondary border-opacity-25">
+            <div class="d-flex align-items-center gap-2">
+                <span class="terminal-dot bg-danger"></span>
+                <span class="terminal-dot bg-warning"></span>
+                <span class="terminal-dot bg-success"></span>
+                <span class="text-white-50 monospace fs-7 ms-2">failover_process_execution.log</span>
+            </div>
+            <div id="consoleStatus" class="badge bg-secondary monospace">STANDBY</div>
+        </div>
+        <div class="card-body p-0">
+            <pre id="terminalConsole" class="p-4 mb-0 text-success monospace overflow-auto fs-7" style="max-height: 250px; min-height: 180px; line-height: 1.6;">[SYSTEM] Sẵn sàng mô phỏng sự cố...</pre>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let statusInterval = null;
+
+            // Load initial state
+            updateStatus();
+
+            // 1. Button Trigger Outage
+            $("#btnTrigger").click(function() {
+                if (confirm("XÁC NHẬN: Bạn có chắc chắn muốn ngắt toàn bộ kết nối và làm sập Vùng Singapore?")) {
+                    $("#btnTrigger").prop("disabled", true);
+                    $.post("/DisasterRecovery/TriggerDisaster", function() {
+                        updateStatus();
+                        startStatusPolling();
+                    });
+                }
+            });
+
+            // 2. Button Start Failover
+            $("#btnFailover").click(function() {
+                $("#btnFailover").prop("disabled", true);
+                $.post("/DisasterRecovery/StartFailover", function() {
+                    updateStatus();
+                    startStatusPolling();
+                });
+            });
+
+            // 3. Button Reset
+            $("#btnReset").click(function() {
+                $.post("/DisasterRecovery/Reset", function() {
+                    stopStatusPolling();
+                    updateStatus();
+                    $("#terminalConsole").text("[SYSTEM] Đã reset môi trường về trạng thái bình thường.");
+                    $("#rtoTime").text("0.0s");
+                });
+            });
+
+            function startStatusPolling() {
+                if (statusInterval) clearInterval(statusInterval);
+                statusInterval = setInterval(updateStatus, 1000);
+            }
+
+            function stopStatusPolling() {
+                if (statusInterval) {
+                    clearInterval(statusInterval);
+                    statusInterval = null;
+                }
+            }
+
+            function updateStatus() {
+                $.getJSON("/DisasterRecovery/GetStatus", function(data) {
+                    // Update variables on interface
+                    const isSingaporeDown = data.isSingaporeDown;
+                    const isFailedOver = data.isFailedOver;
+                    const status = data.failoverStatus;
+                    const duration = data.durationSeconds;
+                    const region = data.currentRegion;
+
+                    // A. Update Singapore panel
+                    if (isSingaporeDown) {
+                        $("#panelSingapore").css("border", "1px solid #7f1d1d");
+                        $("#statusSingaporeDot").attr("class", "status-indicator-lg down");
+                        $("#statusSingaporeText").text("DOWN / OFFLINE").attr("class", "text-danger");
+                        $("#connSingaporeText").text("ERROR / CRITICAL").attr("class", "text-danger");
+                        $("#iconSingapore").attr("class", "bi bi-globe-asia-australia text-danger animate-pulse");
+                        $("#wireLine").attr("class", "wire-line down");
+                    } else {
+                        $("#panelSingapore").css("border", "1px solid rgba(255, 255, 255, 0.05)");
+                        $("#statusSingaporeDot").attr("class", "status-indicator-lg healthy");
+                        $("#statusSingaporeText").text("ACTIVE").attr("class", "text-success");
+                        $("#connSingaporeText").text("100% ONLINE").attr("class", "text-success");
+                        $("#iconSingapore").attr("class", "bi bi-globe-asia-australia text-primary");
+                        $("#wireLine").attr("class", "wire-line active");
+                    }
+
+                    // B. Update Tokyo panel
+                    if (isFailedOver) {
+                        $("#panelTokyo").css("border", "1px solid #064e3b").css("opacity", "1");
+                        $("#statusTokyoDot").attr("class", "status-indicator-lg healthy");
+                        $("#statusTokyoText").text("ACTIVE (FAILOVER)").attr("class", "text-success");
+                        $("#connTokyoText").text("100% ONLINE").attr("class", "text-success");
+                        $("#iconTokyo").attr("class", "bi bi-globe text-success");
+                        $("#wireLine").attr("class", "wire-line failover");
+                    } else if (status === "RUNNING") {
+                        $("#panelTokyo").css("opacity", "0.8");
+                        $("#statusTokyoDot").attr("class", "status-indicator-lg standby").css("background-color", "#f59e0b");
+                        $("#statusTokyoText").text("INITIALIZING...").attr("class", "text-warning");
+                        $("#connTokyoText").text("PROVISIONING").attr("class", "text-warning");
+                        $("#iconTokyo").attr("class", "bi bi-globe text-warning");
+                        $("#wireLine").attr("class", "wire-line failover");
+                    } else {
+                        $("#panelTokyo").css("opacity", "0.6").css("border", "1px solid rgba(255, 255, 255, 0.05)");
+                        $("#statusTokyoDot").attr("class", "status-indicator-lg standby");
+                        $("#statusTokyoText").text("STANDBY").attr("class", "text-secondary");
+                        $("#connTokyoText").text("CHƯA KHỞI TẠO").attr("class", "text-secondary");
+                        $("#iconTokyo").attr("class", "bi bi-globe text-secondary");
+                    }
+
+                    // C. Update Buttons state
+                    if (isSingaporeDown) {
+                        $("#btnTrigger").prop("disabled", true);
+                        if (status === "STANDBY") {
+                            $("#btnFailover").prop("disabled", false);
+                        } else {
+                            $("#btnFailover").prop("disabled", true);
+                        }
+                    } else {
+                        $("#btnTrigger").prop("disabled", false);
+                        $("#btnFailover").prop("disabled", true);
+                    }
+
+                    // D. Alert Banners
+                    if (isSingaporeDown && !isFailedOver) {
+                        $("#disasterAlert").removeClass("d-none");
+                        $("#successAlert").addClass("d-none");
+                    } else if (isFailedOver) {
+                        $("#disasterAlert").addClass("d-none");
+                        $("#successAlert").removeClass("d-none");
+                    } else {
+                        $("#disasterAlert").addClass("d-none");
+                        $("#successAlert").addClass("d-none");
+                    }
+
+                    // E. KPIs update
+                    if (duration > 0) {
+                        $("#rtoTime").text(duration.toFixed(1) + "s");
+                    }
+                    if (isSingaporeDown && !isFailedOver) {
+                        $("#healthScore").text("0%").attr("class", "text-danger fw-bold monospace mb-1");
+                    } else if (isFailedOver) {
+                        $("#healthScore").text("100%").attr("class", "text-success fw-bold monospace mb-1");
+                    } else {
+                        $("#healthScore").text("100%").attr("class", "text-success fw-bold monospace mb-1");
+                    }
+
+                    // F. Console Logs streaming
+                    if (data.logs && data.logs.length > 0) {
+                        let logText = "";
+                        data.logs.forEach(function(log) {
+                            logText += log + "\n";
+                        });
+                        $("#terminalConsole").text(logText);
+                        
+                        // Scroll to bottom
+                        const consoleEl = document.getElementById("terminalConsole");
+                        if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight;
+                    }
+
+                    $("#consoleStatus").text(status);
+                    if (status === "COMPLETED" || status === "FAILED") {
+                        stopStatusPolling();
+                    } else if (status === "RUNNING") {
+                        startStatusPolling();
+                    }
+                });
+            }
+        });
+    </script>
+}

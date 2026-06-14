@@ -22,10 +22,21 @@ public class MonitoringService : IMonitoringService
     {
         var localStackConfig = _configuration.GetSection("LocalStack");
         var serviceUrl = localStackConfig["ServiceUrl"] ?? "http://localhost:4566";
-        var region = localStackConfig["Region"] ?? "ap-southeast-1";
+        var region = DisasterState.CurrentRegion;
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
+        
         var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
+
+        if (region == "ap-northeast-1")
+        {
+            tableName = "cloud-migration-logs-kedep-tokyo";
+        }
+
+        if (DisasterState.IsSingaporeDown && region == "ap-southeast-1")
+        {
+            throw new Exception("CRITICAL: Không thể kết nối với Vùng Singapore (ap-southeast-1). Vùng đang gặp sự cố ngắt kết nối diện rộng!");
+        }
 
         var viewModel = new MonitoringDashboardViewModel();
         viewModel.Filter.SelectedMigrationId = migrationIdFilter;

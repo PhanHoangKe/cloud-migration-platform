@@ -19,6 +19,7 @@ namespace MigrationDashboard.Services;
 public class DatabaseExportService : IDatabaseExportService
 {
     private readonly IConfiguration _configuration;
+    public static string? CustomConnectionString { get; set; }
 
     public DatabaseExportService(IConfiguration configuration)
     {
@@ -60,8 +61,8 @@ public class DatabaseExportService : IDatabaseExportService
         };
         using var dynamoClient = new AmazonDynamoDBClient(accessKey, secretKey, dynamoConfig);
 
-        // 2. Read connection string
-        var connectionString = _configuration.GetConnectionString("OnPremDatabase");
+        // 2. Read connection string (uses custom configured connection string if set via UI)
+        var connectionString = CustomConnectionString ?? _configuration.GetConnectionString("OnPremDatabase");
         if (string.IsNullOrEmpty(connectionString))
         {
             result.ErrorMessage = "Connection string 'OnPremDatabase' is not configured.";

@@ -57,9 +57,9 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
         bool hasViews = false;
         bool hasWwwroot = false;
         bool canReadSourceWithoutError = true;
-        bool isSqlServer = false;
+        string detectedDb = "N/A";
 
-        // 1. Detect Csproj and Target Framework
+        // 1. Detect Csproj, Target Framework, and packages
         try
         {
             var csprojFiles = Directory.GetFiles(onPremAppPath, "*.csproj", SearchOption.TopDirectoryOnly);
@@ -79,6 +79,35 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
                         hasValidFramework = true;
                     }
                 }
+
+                // Smart NuGet package scanning for database providers
+                if (csprojContent.Contains("Microsoft.EntityFrameworkCore.SqlServer", StringComparison.OrdinalIgnoreCase) ||
+                    csprojContent.Contains("Microsoft.Data.SqlClient", StringComparison.OrdinalIgnoreCase) ||
+                    csprojContent.Contains("System.Data.SqlClient", StringComparison.OrdinalIgnoreCase))
+                {
+                    detectedDb = "SQL Server";
+                }
+                else if (csprojContent.Contains("Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase) ||
+                         csprojContent.Contains("Npgsql", StringComparison.OrdinalIgnoreCase))
+                {
+                    detectedDb = "PostgreSQL";
+                }
+                else if (csprojContent.Contains("Pomelo.EntityFrameworkCore.MySql", StringComparison.OrdinalIgnoreCase) ||
+                         csprojContent.Contains("MySql.Data", StringComparison.OrdinalIgnoreCase) ||
+                         csprojContent.Contains("MySqlConnector", StringComparison.OrdinalIgnoreCase))
+                {
+                    detectedDb = "MySQL";
+                }
+                else if (csprojContent.Contains("Microsoft.EntityFrameworkCore.Sqlite", StringComparison.OrdinalIgnoreCase) ||
+                         csprojContent.Contains("System.Data.SQLite", StringComparison.OrdinalIgnoreCase))
+                {
+                    detectedDb = "SQLite";
+                }
+                else if (csprojContent.Contains("Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase) ||
+                         csprojContent.Contains("Oracle.ManagedDataAccess", StringComparison.OrdinalIgnoreCase))
+                {
+                    detectedDb = "Oracle";
+                }
             }
         }
         catch (Exception ex)
@@ -91,40 +120,77 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
         try
         {
             var appSettingsPath = Path.Combine(onPremAppPath, "appsettings.json");
+            var appSettingsDevPath = Path.Combine(onPremAppPath, "appsettings.Development.json");
+
+            bool CheckJsonForDb(string path)
+            {
+                if (!File.Exists(path)) return false;
+
+                string jsonContent = File.ReadAllText(path);
+                if (string.IsNullOrWhiteSpace(jsonContent)) return false;
+
+                JObject config = JObject.Parse(jsonContent);
+                var connStrings = config["ConnectionStrings"] ?? config["connectionStrings"];
+
+                if (connStrings != null && connStrings.HasValues)
+                {
+                    hasConnectionString = true;
+                    viewModel.HasConnectionString = true;
+
+                    foreach (var prop in connStrings.Children<JProperty>())
+                    {
+                        string connStrVal = prop.Value.ToString();
+                        if (connStrVal.Contains("sqlserver", StringComparison.OrdinalIgnoreCase) ||
+                            connStrVal.Contains("sqlexpress", StringComparison.OrdinalIgnoreCase) ||
+                            connStrVal.Contains("trusted_connection", StringComparison.OrdinalIgnoreCase) ||
+                            connStrVal.Contains("database=", StringComparison.OrdinalIgnoreCase) ||
+                            connStrVal.Contains("server=", StringComparison.OrdinalIgnoreCase) ||
+                            connStrVal.Contains("1433", StringComparison.OrdinalIgnoreCase))
+                        {
+                            detectedDb = "SQL Server";
+                            return true;
+                        }
+                        else if (connStrVal.Contains("host=", StringComparison.OrdinalIgnoreCase) && 
+                                 (connStrVal.Contains("port=5432", StringComparison.OrdinalIgnoreCase) || connStrVal.Contains("npgsql", StringComparison.OrdinalIgnoreCase) || connStrVal.Contains("postgres", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            detectedDb = "PostgreSQL";
+                            return true;
+                        }
+                        else if (connStrVal.Contains("port=3306", StringComparison.OrdinalIgnoreCase) || connStrVal.Contains("mysql", StringComparison.OrdinalIgnoreCase))
+                        {
+                            detectedDb = "MySQL";
+                            return true;
+                        }
+                        else if (connStrVal.Contains("datasource=", StringComparison.OrdinalIgnoreCase) || connStrVal.Contains(".db", StringComparison.OrdinalIgnoreCase) || connStrVal.Contains(".sqlite", StringComparison.OrdinalIgnoreCase))
+                        {
+                            detectedDb = "SQLite";
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
             if (File.Exists(appSettingsPath))
             {
                 hasAppSettings = true;
                 viewModel.HasAppSettings = true;
 
-                string jsonContent = File.ReadAllText(appSettingsPath);
-                if (!string.IsNullOrWhiteSpace(jsonContent))
-                {
-                    JObject config = JObject.Parse(jsonContent);
-                    var connStrings = config["ConnectionStrings"] ?? config["connectionStrings"];
-                    
-                    if (connStrings != null && connStrings.HasValues)
-                    {
-                        hasConnectionString = true;
-                        viewModel.HasConnectionString = true;
+                // Try to find database type in appsettings.json
+                bool found = CheckJsonForDb(appSettingsPath);
 
-                        // Check the actual connection string values
-                        foreach (var prop in connStrings.Children<JProperty>())
-                        {
-                            string connStrVal = prop.Value.ToString();
-                            if (connStrVal.Contains("sqlserver", StringComparison.OrdinalIgnoreCase) ||
-                                connStrVal.Contains("sqlexpress", StringComparison.OrdinalIgnoreCase) ||
-                                connStrVal.Contains("trusted_connection", StringComparison.OrdinalIgnoreCase) ||
-                                connStrVal.Contains("database=", StringComparison.OrdinalIgnoreCase) ||
-                                connStrVal.Contains("server=", StringComparison.OrdinalIgnoreCase) ||
-                                connStrVal.Contains("1433", StringComparison.OrdinalIgnoreCase))
-                            {
-                                isSqlServer = true;
-                                viewModel.DatabaseType = "SQL Server";
-                                break;
-                            }
-                        }
-                    }
+                // If not found in appsettings.json (e.g. using placeholder/env variables), try appsettings.Development.json
+                if (!found && File.Exists(appSettingsDevPath))
+                {
+                    CheckJsonForDb(appSettingsDevPath);
                 }
+            }
+            else if (File.Exists(appSettingsDevPath))
+            {
+                // If only appsettings.Development.json exists
+                hasAppSettings = true;
+                viewModel.HasAppSettings = true;
+                CheckJsonForDb(appSettingsDevPath);
             }
         }
         catch (Exception ex)
@@ -162,7 +228,7 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
             viewModel.WwwrootFilesCount = Directory.GetFiles(wwwrootPath, "*.*", SearchOption.AllDirectories).Length;
         }
 
-        // 4. Recursive source scanning for metrics and size
+        // 4. Recursive source scanning for metrics, size, and source code level DB detection
         int totalSourceFiles = 0;
         double totalSizeInBytes = 0;
         bool usesLocalFileStorage = Directory.Exists(Path.Combine(onPremAppPath, "wwwroot", "uploads")) ||
@@ -170,7 +236,7 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
 
         try
         {
-            ScanDirectorySource(onPremAppPath, ref totalSourceFiles, ref totalSizeInBytes, ref usesLocalFileStorage);
+            ScanDirectorySource(onPremAppPath, ref totalSourceFiles, ref totalSizeInBytes, ref usesLocalFileStorage, ref detectedDb);
             viewModel.TotalSourceFiles = totalSourceFiles;
             viewModel.EstimatedSourceSizeMb = Math.Round(totalSizeInBytes / (1024.0 * 1024.0), 2);
             viewModel.UsesLocalFileStorage = usesLocalFileStorage;
@@ -181,8 +247,11 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
             viewModel.ScanError = (viewModel.ScanError ?? "") + $" Lỗi quét mã nguồn: {ex.Message}";
         }
 
+        viewModel.DatabaseType = detectedDb;
+        bool hasDatabase = viewModel.DatabaseType != "N/A";
+
         // 5. Recommended migration strategy
-        if (viewModel.DatabaseType == "SQL Server" && hasCsproj)
+        if (hasDatabase && hasCsproj)
         {
             viewModel.RecommendedMigrationStrategy = "Re-platform";
         }
@@ -201,18 +270,29 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
         if (hasViews) score += 10;
         if (hasWwwroot) score += 10;
         if (canReadSourceWithoutError) score += 10;
-        if (isSqlServer) score += 10;
+        if (hasDatabase) score += 10;
 
         viewModel.ReadinessScore = score;
 
         // 7. Risks analysis
-        if (hasConnectionString && isSqlServer)
+        if (hasConnectionString && hasDatabase)
         {
+            string dbName = viewModel.DatabaseType;
+            string cloudTarget = dbName switch
+            {
+                "SQL Server" => "RDS SQL Server hoặc SQL Server chạy trên EC2",
+                "PostgreSQL" => "RDS PostgreSQL hoặc Aurora PostgreSQL",
+                "MySQL" => "RDS MySQL hoặc Aurora MySQL",
+                "SQLite" => "RDS PostgreSQL/MySQL hoặc chuyển đổi thành AWS Aurora Serverless",
+                "Oracle" => "RDS Oracle",
+                _ => "dịch vụ Managed Database tương ứng trên AWS (RDS)"
+            };
+
             viewModel.RiskItems.Add(new AssessmentRiskItemViewModel
             {
                 Level = "Medium",
-                Description = "Ứng dụng đang phụ thuộc vào cơ sở dữ liệu SQL Server local/nội bộ.",
-                Recommendation = "Cần chuyển đổi sang RDS SQL Server hoặc SQL Server chạy trên EC2, và cấu hình lại chuỗi kết nối (Connection String) sang Endpoint của Cloud."
+                Description = $"Ứng dụng đang phụ thuộc vào cơ sở dữ liệu {dbName} local/nội bộ.",
+                Recommendation = $"Cần chuyển đổi sang {cloudTarget}, và cấu hình lại chuỗi kết nối (Connection String) sang Endpoint của Cloud."
             });
         }
 
@@ -248,7 +328,19 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
 
         // 8. Recommendations
         viewModel.Recommendations.Add("Sử dụng Terraform để định nghĩa và tự động hóa việc khởi tạo hạ tầng Cloud giả lập.");
-        viewModel.Recommendations.Add("Chuyển đổi tệp sao lưu dữ liệu SQL Server dạng .bak (được nén thành JSON) lên AWS S3.");
+        if (viewModel.DatabaseType == "SQL Server")
+        {
+            viewModel.Recommendations.Add("Sử dụng AWS Application Migration Service (MGN) để Lift and Shift máy chủ web và AWS Database Migration Service (DMS) để đồng bộ dữ liệu SQL Server (Re-platform database) hoặc upload trực tiếp tệp backup dạng .bak lên AWS S3.");
+        }
+        else if (viewModel.DatabaseType == "PostgreSQL" || viewModel.DatabaseType == "MySQL" || viewModel.DatabaseType == "SQLite")
+        {
+            viewModel.Recommendations.Add($"Sử dụng AWS Database Migration Service (DMS) hoặc xuất bản tệp dump cơ sở dữ liệu {viewModel.DatabaseType} lên AWS S3 phục vụ Re-platform.");
+        }
+        else
+        {
+            viewModel.Recommendations.Add("Sử dụng AWS Application Migration Service (MGN) để chuyển dịch nguyên trạng (Lift and Shift) máy chủ ứng dụng và di chuyển cơ sở dữ liệu nguồn lên AWS S3 hoặc RDS.");
+        }
+        viewModel.Recommendations.Add("Thiết lập đường truyền VPN Site-to-Site bảo mật kết nối mạng nội bộ của On-premise tới VPC Private Subnet trên Cloud.");
         viewModel.Recommendations.Add("Ghi và đồng bộ lịch sử, nhật ký chuyển đổi ứng dụng vào DynamoDB table.");
         viewModel.Recommendations.Add("Thiết lập AWS Lambda Function để thực hiện tự động kiểm thử kết nối (Self-test) sau khi di trú thành công.");
         viewModel.Recommendations.Add("Tách biệt và bảo mật thông tin tài khoản, chuỗi kết nối bằng cách sử dụng Biến môi trường hoặc AWS Secrets Manager thay vì ghi cứng trong code.");
@@ -266,7 +358,7 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
         {
             Name = "Cơ sở dữ liệu nguồn",
             Value = viewModel.DatabaseType != "N/A" ? viewModel.DatabaseType : "Không xác định",
-            Status = isSqlServer ? "Success" : "Warning",
+            Status = hasDatabase ? "Success" : "Warning",
             Icon = "bi-database"
         });
 
@@ -305,7 +397,7 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
         return viewModel;
     }
 
-    private void ScanDirectorySource(string dir, ref int totalSourceFiles, ref double totalSizeInBytes, ref bool usesLocalFileStorage)
+    private void ScanDirectorySource(string dir, ref int totalSourceFiles, ref double totalSizeInBytes, ref bool usesLocalFileStorage, ref string detectedDb)
     {
         string dirName = Path.GetFileName(dir);
         if (ExcludedFolders.Contains(dirName, StringComparer.OrdinalIgnoreCase))
@@ -321,17 +413,38 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
             foreach (var file in Directory.GetFiles(dir))
             {
                 var ext = Path.GetExtension(file).ToLowerInvariant();
+                var fileName = Path.GetFileName(file).ToLowerInvariant();
                 if (ext == ".cs" || ext == ".cshtml" || ext == ".json" || ext == ".css" || ext == ".js")
                 {
                     totalSourceFiles++;
                     FileInfo fi = new FileInfo(file);
                     totalSizeInBytes += fi.Length;
+
+                    // Smart scan for DB configurations in key C# files
+                    if (ext == ".cs" && (fileName == "program.cs" || fileName == "startup.cs" || fileName.EndsWith("context.cs")))
+                    {
+                        try
+                        {
+                            string codeContent = File.ReadAllText(file);
+                            if (codeContent.Contains("UseSqlServer", StringComparison.OrdinalIgnoreCase))
+                                detectedDb = "SQL Server";
+                            else if (codeContent.Contains("UseNpgsql", StringComparison.OrdinalIgnoreCase))
+                                detectedDb = "PostgreSQL";
+                            else if (codeContent.Contains("UseMySql", StringComparison.OrdinalIgnoreCase) || codeContent.Contains("UseMySQL", StringComparison.OrdinalIgnoreCase))
+                                detectedDb = "MySQL";
+                            else if (codeContent.Contains("UseSqlite", StringComparison.OrdinalIgnoreCase))
+                                detectedDb = "SQLite";
+                            else if (codeContent.Contains("UseOracle", StringComparison.OrdinalIgnoreCase))
+                                detectedDb = "Oracle";
+                        }
+                        catch {}
+                    }
                 }
             }
 
             foreach (var subDir in Directory.GetDirectories(dir))
             {
-                ScanDirectorySource(subDir, ref totalSourceFiles, ref totalSizeInBytes, ref usesLocalFileStorage);
+                ScanDirectorySource(subDir, ref totalSourceFiles, ref totalSizeInBytes, ref usesLocalFileStorage, ref detectedDb);
             }
         }
         catch

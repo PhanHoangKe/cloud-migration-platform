@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using Amazon.DynamoDBv2;
@@ -15,6 +16,7 @@ public class MigrationProgressService : IMigrationProgressService
 {
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
+    private static readonly ConcurrentDictionary<string, int> _maxProgress = new();
 
     public MigrationProgressService(IConfiguration configuration, IWebHostEnvironment env)
     {
@@ -55,7 +57,8 @@ public class MigrationProgressService : IMigrationProgressService
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
                     { ":mId", new AttributeValue { S = migrationId } }
-                }
+                },
+                ConsistentRead = true
             };
 
             var queryResponse = await dynamoClient.QueryAsync(queryRequest);
@@ -243,6 +246,9 @@ public class MigrationProgressService : IMigrationProgressService
                 }
             }
         }
+
+        // Ensure progress is monotonic (never goes backwards)
+        progressPercent = _maxProgress.AddOrUpdate(migrationId, progressPercent, (key, oldVal) => Math.Max(oldVal, progressPercent));
 
         return new MigrationProgressViewModel
         {

@@ -73,14 +73,14 @@
                 <div class="row align-items-center py-2">
                     <div class="col-md-2 text-center mb-3 mb-md-0">
                         <h2 class="display-6 font-bold text-indigo mb-0" id="progressPercentText" style="font-weight: 800;">
-                            @(Model.Status == "COMPLETED" ? "100%" : "10%")
+                            @(Model.Status == "COMPLETED" || Model.Status == "FAILED" ? "100%" : "0%")
                         </h2>
                         <span class="text-xxs text-muted text-uppercase font-semibold">Hoàn thành</span>
                     </div>
                     <div class="col-md-10">
                         <div class="progress mb-2" style="height: 12px; border-radius: 6px;">
                             @{
-                                string initialPercent = Model.Status == "COMPLETED" ? "100%" : "10%";
+                                string initialPercent = (Model.Status == "COMPLETED" || Model.Status == "FAILED") ? "100%" : "0%";
                                 string progressBg = Model.Status == "COMPLETED" ? "bg-success" : (Model.Status == "FAILED" ? "bg-danger" : "bg-indigo progress-bar-striped progress-bar-animated");
                             }
                             <div class="progress-bar @progressBg" id="progressBar" role="progressbar" style="width: @initialPercent"></div>
@@ -154,13 +154,17 @@
                         <tr>
                             <td class="text-muted py-2">Trạng thái:</td>
                             <td class="py-2">
-                                @if (Model.IsSuccess)
+                                @if (Model.Status == "COMPLETED")
                                 {
-                                    <span class="status-badge success"><i class="bi bi-cloud-check-fill me-1"></i> COMPLETED</span>
+                                    <span class="status-badge success" id="detailStatusBadge"><i class="bi bi-cloud-check-fill me-1"></i> COMPLETED</span>
+                                }
+                                else if (Model.Status == "FAILED")
+                                {
+                                    <span class="status-badge danger" id="detailStatusBadge"><i class="bi bi-x-circle-fill me-1"></i> FAILED</span>
                                 }
                                 else
                                 {
-                                    <span class="status-badge danger"><i class="bi bi-x-circle-fill me-1"></i> FAILED</span>
+                                    <span class="status-badge info" id="detailStatusBadge"><i class="bi bi-arrow-repeat spin d-inline-block me-1"></i> RUNNING</span>
                                 }
                             </td>
                         </tr>
@@ -547,7 +551,7 @@
                     }
                     else
                     {
-                        <span class="text-muted" style="font-size: 11px;">Không có phản hồi kiểm thử tự động.</span>
+                        <span class="text-white-50" style="font-size: 11px;">Không có phản hồi kiểm thử tự động.</span>
                     }
                 </div>
             </div>
@@ -712,6 +716,21 @@
                     overallBadge.classList.add("danger");
                 } else {
                     overallBadge.classList.add("info");
+                }
+            }
+
+            var detailBadge = document.getElementById("detailStatusBadge");
+            if (detailBadge) {
+                detailBadge.className = "status-badge";
+                if (data.currentStatus === "COMPLETED") {
+                    detailBadge.innerHTML = '<i class="bi bi-cloud-check-fill me-1"></i> COMPLETED';
+                    detailBadge.classList.add("success");
+                } else if (data.currentStatus === "FAILED") {
+                    detailBadge.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> FAILED';
+                    detailBadge.classList.add("danger");
+                } else {
+                    detailBadge.innerHTML = '<i class="bi bi-arrow-repeat spin d-inline-block me-1"></i> RUNNING';
+                    detailBadge.classList.add("info");
                 }
             }
             
