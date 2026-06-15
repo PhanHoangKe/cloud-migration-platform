@@ -66,20 +66,7 @@ graph TD
     terraform init
     terraform apply -auto-approve
     ```
-    *Giải thích dễ hiểu:* Terraform sẽ tự động tạo ra các "hộp chứa dữ liệu" (S3 bucket), "bảng lưu nhật ký" (DynamoDB) và "robot kiểm tra tự động" (Lambda Function) tại Vùng Singapore.
-4.  **Bước 4: Bật SQL Server nội bộ:** Hãy chắc chắn dịch vụ SQL Server trên máy của bạn đang chạy và có sẵn cơ sở dữ liệu tên là `EduFlex`.
-5.  **Bước 5: Chạy Dashboard điều khiển:**
-    Mở Terminal tại thư mục `D:\cloud-migration-platform\app\MigrationDashboard\MigrationDashboard` và chạy lệnh:
-    ```bash
-    dotnet run
-    ```
-    Mở trình duyệt web truy cập địa chỉ: **[http://localhost:5097](http://localhost:5097)**.
-
----
-
-## III. CHI TIẾT CÁC TÍNH NĂNG & CƠ CHẾ HOẠT ĐỘNG KỸ THUẬT
-
-### TÍNH NĂNG 1: ĐÁNH GIÁ TRƯỚC DI TRÚ (PRE-MIGRATION ASSESSMENT)
+    *Giải thích dễ hiểu:* Terraform sẽ tự động tạo ra các "hộp chứa dữ liệu" (S3 buc### TÍNH NĂNG 1: ĐÁNH GIÁ TRƯỚC DI TRÚ (PRE-MIGRATION ASSESSMENT)
 *   **Ý nghĩa tính năng:** Tính năng này giống như **"Bác sĩ khám sức khỏe"** cho mã nguồn của ứng dụng. Trước khi chuyển ứng dụng lên đám mây, chúng ta phải quét xem code có tương thích với đám mây không, có lỗi thời không và có rủi ro bảo mật nào không.
 *   **Cơ chế hoạt động kỹ thuật:**
     1.  Khi người dùng nhấn yêu cầu quét, Dashboard sẽ dùng dịch vụ `PreMigrationAssessmentService` đọc trực tiếp file project `EduFlex.csproj` và file cấu hình `appsettings.json` của ứng dụng nguồn.
@@ -90,6 +77,7 @@ graph TD
         *   Có cấu hình kết nối CSDL rõ ràng: cộng 20 điểm.
         *   Có đầy đủ các thư mục cấu trúc tiêu chuẩn MVC (`Controllers`, `Views`, `wwwroot`): cộng 50 điểm.
     *   **Rủi ro bảo mật (Architectural Risks):** Nếu phát hiện chuỗi kết nối chứa mật khẩu viết dưới dạng văn bản thuần (Plain-text) không mã hóa, hệ thống sẽ cảnh báo đỏ và khuyên nên dùng dịch vụ **AWS Secrets Manager** để lưu trữ an toàn.
+    *   **Ước tính chi phí FinOps (FinOps Cost Analysis):** Tự động tính toán chi phí vận hành hàng tháng của hệ thống khi chạy trên đám mây. So sánh chi phí giữa mô hình di chuyển nguyên trạng (Rehost - EC2 & RDS SQL Server) và mô hình hiện đại hóa tối ưu (Serverless - AWS Lambda, DynamoDB & S3). Công thức tính toán dựa trên số lượng controllers (logic xử lý), dung lượng mã nguồn và số lượng tệp tin tĩnh (wwwroot) quét được từ mã nguồn EduFlex. Giúp doanh nghiệp tối ưu hóa chi phí lên đến 80% khi sử dụng mô hình Serverless.
 
 ---
 
@@ -131,6 +119,24 @@ graph TD
 
 ### TÍNH NĂNG 5: PHÒNG ĐIỀU HÀNH KHẨN CẤP (DISASTER RECOVERY - DR ROOM)
 *   **Ý nghĩa tính năng:** Giả lập tình huống thảm họa cực kỳ nguy hiểm trong thực tế (ví dụ: đứt cáp quang biển, cháy trung tâm dữ liệu ở Singapore) và kiểm tra khả năng tự động ứng cứu, chuyển vùng hoạt động sang trung tâm dữ liệu dự phòng ở Tokyo.
+*   **Cơ chế hoạt động kỹ thuật:**
+    1.  **Singapore Outage (Sập vùng):** Khi bấm nút giả lập sập, Dashboard sẽ cố tình kích hoạt trạng thái ngắt kết nối đến khu vực chính. Khi đó, toàn bộ giao diện chính của Dashboard sẽ bị khóa, chuyển sang màu đỏ cảnh báo mất kết nối dịch vụ.
+    2.  **Tokyo Failover (Chuyển vùng khẩn cấp):** Khi quản trị viên bấm nút bắt đầu phục hồi thảm họa, Dashboard sẽ thực thi kịch bản chuyển đổi vùng hoạt động mặc định sang Tokyo (`ap-northeast-1`).
+    3.  **Tự động dựng hạ tầng bằng Terraform:** Dashboard kích hoạt Terraform để tự động khởi tạo hạ tầng dự phòng (S3 Bucket và bảng DynamoDB mới) tại vùng Tokyo.
+    4.  **Cross-Region Replication (CRR - Sao chép xuyên vùng):** Dữ liệu sao lưu và logs hoạt động từ vùng Singapore trước khi sập đã được sao chép tự động sang Tokyo, hệ thống tại Tokyo sẽ đọc các tệp này để phục hồi lại trạng thái ứng dụng.
+*   **Giải thích các khái niệm cốt lõi cần hiểu:**
+    *   **RTO (Recovery Time Objective - Thời gian phục hồi thực tế):** Khoảng thời gian từ lúc Singapore sập cho đến khi Tokyo hoạt động bình thường trở lại (trong demo chỉ mất khoảng 8 giây).
+    *   **RPO (Recovery Point Objective - Mức độ mất dữ liệu):** Nhờ cơ chế sao chép dữ liệu xuyên vùng tự động (CRR), dữ liệu tại Singapore luôn có bản sao tức thời tại Tokyo, giúp **RPO đạt 0.00 giây** (không mất mát bất kỳ byte dữ liệu nào của doanh nghiệp).
+
+---
+
+### TÍNH NĂNG 6: GIÁM SÁT VẬN HÀNH (OPERATIONS MONITORING)
+*   **Ý nghĩa tính năng:** Giống như **"Bảng đồng hồ công-tơ-mét"** của xe ô tô, hiển thị sức khỏe và hiệu năng hoạt động của hệ thống máy chủ đám mây sau khi di trú thành công dưới dạng biểu đồ động thời gian thực.
+*   **Cơ chế hoạt động kỹ thuật:**
+    *   Hệ thống tích hợp thư viện **Chart.js** để vẽ biểu đồ đường (Line Chart) động cập nhật liên tục mỗi 2 giây, đo lường các thông số **CPU Utilization (%)** và **Memory Usage (%)** của hạ tầng đám mây.
+    *   Hiển thị thông số dạng số của **CPU Utilization**, **Memory Usage (MB)**, và **Network Traffic (KB/s)** ở bảng điều khiển bên cạnh.
+    *   Mô phỏng chân thực: Khi có các thao tác di trú hoặc failover, biểu đồ hiệu năng sẽ hiển thị các đỉnh nhọn (spikes) tải tăng vọt tạm thời, phản ánh đúng thực tế tài nguyên đám mây hoạt động lúc bận rộn.
+    *   Vẽ biểu đồ hình tròn (Doughnut Chart) thống kê phân phối trạng thái log thu được từ DynamoDB.�ng hoạt động sang trung tâm dữ liệu dự phòng ở Tokyo.
 *   **Cơ chế hoạt động kỹ thuật:**
     1.  **Singapore Outage (Sập vùng):** Khi bấm nút giả lập sập, Dashboard sẽ cố tình kích hoạt trạng thái ngắt kết nối đến khu vực chính. Khi đó, toàn bộ giao diện chính của Dashboard sẽ bị khóa, chuyển sang màu đỏ cảnh báo mất kết nối dịch vụ.
     2.  **Tokyo Failover (Chuyển vùng khẩn cấp):** Khi quản trị viên bấm nút bắt đầu phục hồi thảm họa, Dashboard sẽ thực thi kịch bản chuyển đổi vùng hoạt động mặc định sang Tokyo (`ap-northeast-1`).

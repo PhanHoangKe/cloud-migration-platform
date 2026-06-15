@@ -217,8 +217,9 @@ public class DisasterRecoveryController : Controller
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            DisasterState.AddLog($"  - Lỗi kết nối LocalStack: {ex.Message}");
             return false;
         }
     }

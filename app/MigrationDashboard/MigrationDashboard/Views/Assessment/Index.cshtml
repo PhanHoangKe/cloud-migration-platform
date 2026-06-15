@@ -211,7 +211,7 @@
         </div>
 
         <!-- Recommendations -->
-        <div class="dashboard-card">
+        <div class="dashboard-card mb-4">
             <div class="card-header-custom border-bottom pb-2 mb-3">
                 <h5 class="card-title-custom text-success">
                     <i class="bi bi-lightbulb-fill me-2"></i> Lộ trình & Khuyến nghị đề xuất (Recommendations)
@@ -227,6 +227,83 @@
                     </li>
                 }
             </ul>
+        </div>
+
+        <!-- FinOps Cost Comparison Card -->
+        <div class="dashboard-card">
+            <div class="card-header-custom border-bottom pb-2 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h5 class="card-title-custom text-indigo">
+                    <i class="bi bi-currency-dollar me-2"></i> Ước tính chi phí vận hành hàng tháng (FinOps Cost Analysis)
+                </h5>
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill" style="font-weight: 700; font-size: 11px;">
+                    <i class="bi bi-piggy-bank me-1"></i> Tiết kiệm @Model.CostSavingsPercent%
+                </span>
+            </div>
+
+            <p class="text-muted small mb-4">
+                Bảng so sánh chi phí ước tính hàng tháng giữa mô hình di chuyển nguyên trạng (Rehost - EC2 & RDS) và mô hình hiện đại hóa (Serverless - Lambda & DynamoDB) thiết kế riêng cho ứng dụng của bạn.
+            </p>
+
+            <div class="row g-3 mb-4">
+                <!-- Rehost Cost Card -->
+                <div class="col-md-6">
+                    <div class="p-3 border rounded-3 text-center" style="background-color: rgba(239, 68, 68, 0.02); border-color: rgba(239, 68, 68, 0.1) !important;">
+                        <h6 class="text-muted font-bold text-xs uppercase mb-1">Mô hình truyền thống (Rehost)</h6>
+                        <span class="badge bg-danger bg-opacity-10 text-danger text-xxs mb-2" style="font-weight: 600;">EC2 + RDS SQL Server</span>
+                        <h3 class="text-danger font-bold mb-1">$@Model.RehostTotalCost.ToString("F2")<span class="text-xs text-muted font-normal">/tháng</span></h3>
+                        <p class="text-muted text-xxs mb-0">Thanh toán cố định hàng tháng dù không sử dụng hết tài nguyên.</p>
+                    </div>
+                </div>
+
+                <!-- Serverless Cost Card -->
+                <div class="col-md-6">
+                    <div class="p-3 border rounded-3 text-center" style="background-color: rgba(16, 185, 129, 0.02); border-color: rgba(16, 185, 129, 0.15) !important; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.05);">
+                        <h6 class="text-muted font-bold text-xs uppercase mb-1">Mô hình hiện đại hóa (Serverless)</h6>
+                        <span class="badge bg-success bg-opacity-10 text-success text-xxs mb-2" style="font-weight: 600;">Lambda + DynamoDB + S3</span>
+                        <h3 class="text-success font-bold mb-1">$@Model.ServerlessTotalCost.ToString("F2")<span class="text-xs text-muted font-normal">/tháng</span></h3>
+                        <p class="text-muted text-xxs mb-0">Thanh toán theo lưu lượng thực tế (Pay-per-request), tối ưu hóa 100%.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-sm">
+                    <thead class="table-light">
+                        <tr class="text-xs text-muted font-bold text-uppercase">
+                            <th>Hạng mục chi phí</th>
+                            <th class="text-center">Rehost (EC2 + RDS)</th>
+                            <th class="text-center">Serverless (Lambda + S3)</th>
+                            <th>Mô tả chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-semibold text-dark text-xs">Phân hệ Web / Compute</td>
+                            <td class="text-center text-danger font-semibold text-xs">$@Model.RehostWebCost.ToString("F2")</td>
+                            <td class="text-center text-success font-semibold text-xs">$@Model.ServerlessWebCost.ToString("F2")</td>
+                            <td class="text-muted text-xxs">EC2 t3.medium ($35) vs AWS Lambda ($0.12/controller)</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold text-dark text-xs">Phân hệ Cơ sở dữ liệu</td>
+                            <td class="text-center text-danger font-semibold text-xs">$@Model.RehostDbCost.ToString("F2")</td>
+                            <td class="text-center text-success font-semibold text-xs">$@Model.ServerlessDbCost.ToString("F2")</td>
+                            <td class="text-muted text-xxs">RDS SQL Server ($65) vs DynamoDB On-Demand ($0.08/MB logs)</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold text-dark text-xs">Lưu trữ file & Assets</td>
+                            <td class="text-center text-danger font-semibold text-xs">$@Model.RehostStorageCost.ToString("F2")</td>
+                            <td class="text-center text-success font-semibold text-xs">$@Model.ServerlessStorageCost.ToString("F2")</td>
+                            <td class="text-muted text-xxs">EBS Storage ($10) vs AWS S3 Object Storage ($0.01/file)</td>
+                        </tr>
+                        <tr class="table-light font-bold">
+                            <td class="text-dark text-xs">Tổng chi phí dự kiến</td>
+                            <td class="text-center text-danger text-xs">$@Model.RehostTotalCost.ToString("F2")</td>
+                            <td class="text-center text-success text-xs">$@Model.ServerlessTotalCost.ToString("F2")</td>
+                            <td class="text-indigo text-xxs">Tiết kiệm khoảng $@((Model.RehostTotalCost - Model.ServerlessTotalCost).ToString("F2")) mỗi tháng</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

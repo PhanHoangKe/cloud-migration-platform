@@ -394,6 +394,22 @@ public class PreMigrationAssessmentService : IPreMigrationAssessmentService
             Icon = "bi-file-code"
         });
 
+        // FinOps Cost Estimation calculations
+        viewModel.RehostWebCost = 35.00m + (viewModel.ControllersCount * 1.50m);
+        viewModel.RehostDbCost = viewModel.DatabaseType == "SQL Server" ? 65.00m + ((decimal)viewModel.EstimatedSourceSizeMb * 0.50m) : 45.00m + ((decimal)viewModel.EstimatedSourceSizeMb * 0.40m);
+        viewModel.RehostStorageCost = 10.00m + (viewModel.WwwrootFilesCount * 0.05m);
+        viewModel.RehostTotalCost = viewModel.RehostWebCost + viewModel.RehostDbCost + viewModel.RehostStorageCost;
+
+        viewModel.ServerlessWebCost = Math.Max(0.50m, viewModel.ControllersCount * 0.12m);
+        viewModel.ServerlessDbCost = Math.Max(1.00m, (decimal)viewModel.EstimatedSourceSizeMb * 0.08m);
+        viewModel.ServerlessStorageCost = Math.Max(0.50m, viewModel.WwwrootFilesCount * 0.01m);
+        viewModel.ServerlessTotalCost = viewModel.ServerlessWebCost + viewModel.ServerlessDbCost + viewModel.ServerlessStorageCost;
+
+        if (viewModel.RehostTotalCost > 0)
+        {
+            viewModel.CostSavingsPercent = Math.Round(((viewModel.RehostTotalCost - viewModel.ServerlessTotalCost) / viewModel.RehostTotalCost) * 100, 1);
+        }
+
         return viewModel;
     }
 

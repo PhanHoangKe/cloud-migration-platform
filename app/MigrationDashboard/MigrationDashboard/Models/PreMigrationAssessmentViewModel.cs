@@ -25,4 +25,17 @@ public class PreMigrationAssessmentViewModel
     public string OnPremAppPath { get; set; } = string.Empty;
     public string? ScanError { get; set; }
     public bool IsScanned { get; set; }
+
+    // FinOps Cost Estimation Properties
+    public decimal RehostWebCost { get; set; }
+    public decimal RehostDbCost { get; set; }
+    public decimal RehostStorageCost { get; set; }
+    public decimal RehostTotalCost { get; set; }
+
+    public decimal ServerlessWebCost { get; set; }
+    public decimal ServerlessDbCost { get; set; }
+    public decimal ServerlessStorageCost { get; set; }
+    public decimal ServerlessTotalCost { get; set; }
+
+    public decimal CostSavingsPercent { get; set; }
 }
