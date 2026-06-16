@@ -8,7 +8,7 @@ Write-Host "1. Querying AWS S3 Buckets in LocalStack:" -ForegroundColor Yellow
 aws --endpoint-url=$endpoint s3 ls
 Write-Host ""
 
-$bucketName = "cloud-migration-backup-kedep"
+$bucketName = "cloud-migration-backup-vinhuni"
 Write-Host "2. Listing Objects in S3 Bucket: $bucketName:" -ForegroundColor Yellow
 aws --endpoint-url=$endpoint s3 ls s3://$bucketName --recursive
 Write-Host ""
@@ -17,7 +17,7 @@ Write-Host "3. Querying AWS DynamoDB Tables in LocalStack:" -ForegroundColor Yel
 aws --endpoint-url=$endpoint dynamodb list-tables
 Write-Host ""
 
-$tableName = "cloud-migration-logs-kedep"
+$tableName = "cloud-migration-logs-vinhuni"
 Write-Host "4. Scanning DynamoDB Table: $tableName (Max 5 entries):" -ForegroundColor Yellow
 aws --endpoint-url=$endpoint dynamodb scan --table-name $tableName --max-items 5
 Write-Host ""
@@ -26,7 +26,7 @@ Write-Host "5. Querying AWS Lambda Functions in LocalStack:" -ForegroundColor Ye
 aws --endpoint-url=$endpoint lambda list-functions --query "Functions[*].[FunctionName,Runtime,Handler]" --output table
 Write-Host ""
 
-$lambdaName = "cloud-migration-self-test-kedep"
+$lambdaName = "cloud-migration-self-test-vinhuni"
 Write-Host "6. Invoking Lambda Function: $lambdaName..." -ForegroundColor Yellow
 $responseFile = "response.json"
 if (Test-Path $responseFile) { Remove-Item $responseFile -Force }

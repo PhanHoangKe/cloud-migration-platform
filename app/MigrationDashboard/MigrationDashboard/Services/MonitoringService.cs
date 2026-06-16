@@ -26,11 +26,11 @@ public class MonitoringService : IMonitoringService
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
         
-        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
+        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-vinhuni";
 
         if (region == "ap-northeast-1")
         {
-            tableName = "cloud-migration-logs-kedep-tokyo";
+            tableName = "cloud-migration-logs-vinhuni-tokyo";
         }
 
         if (DisasterState.IsSingaporeDown && region == "ap-southeast-1")

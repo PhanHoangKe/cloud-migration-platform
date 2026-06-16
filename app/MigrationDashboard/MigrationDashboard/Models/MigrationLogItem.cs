@@ -2,7 +2,7 @@ using Amazon.DynamoDBv2.DataModel;
 
 namespace MigrationDashboard.Models;
 
-[DynamoDBTable("cloud-migration-logs-kedep")]
+[DynamoDBTable("cloud-migration-logs-vinhuni")]
 public class MigrationLogItem
 {
     [DynamoDBHashKey]

@@ -21,14 +21,14 @@ graph TD
 
     subgraph AWS Cloud Environment (LocalStack)
         subgraph ap-southeast-1 (Singapore Region - Vùng chính)
-            S3_SG[S3 Bucket: cloud-migration-backup-kedep]
-            DB_SG[DynamoDB Table: cloud-migration-logs-kedep]
-            L_SG[Lambda Function: cloud-migration-self-test-kedep]
+            S3_SG[S3 Bucket: cloud-migration-backup-vinhuni]
+            DB_SG[DynamoDB Table: cloud-migration-logs-vinhuni]
+            L_SG[Lambda Function: cloud-migration-self-test-vinhuni]
         end
         subgraph ap-northeast-1 (Tokyo Region - Vùng dự phòng DR)
-            S3_TY[S3 Bucket: cloud-migration-backup-kedep-tokyo]
-            DB_TY[DynamoDB Table: cloud-migration-logs-kedep-tokyo]
-            L_TY[Lambda Function: cloud-migration-self-test-kedep-tokyo]
+            S3_TY[S3 Bucket: cloud-migration-backup-vinhuni-tokyo]
+            DB_TY[DynamoDB Table: cloud-migration-logs-vinhuni-tokyo]
+            L_TY[Lambda Function: cloud-migration-self-test-vinhuni-tokyo]
         end
     end
 

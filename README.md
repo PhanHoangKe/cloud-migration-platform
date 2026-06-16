@@ -44,9 +44,9 @@ graph TD
     WebApp -->|Đọc| BackupFile
     
     subgraph AWSCloud [AWS Cloud - Giả lập qua LocalStack]
-        S3[(Amazon S3 Bucket: cloud-migration-backup-kedep)]
-        DynamoDB[(DynamoDB Table: cloud-migration-logs-kedep)]
-        Lambda[Lambda Function: cloud-migration-self-test-kedep]
+        S3[(Amazon S3 Bucket: cloud-migration-backup-vinhuni)]
+        DynamoDB[(DynamoDB Table: cloud-migration-logs-vinhuni)]
+        Lambda[Lambda Function: cloud-migration-self-test-vinhuni]
     end
 
     WebApp -->|2. Upload file backup| S3

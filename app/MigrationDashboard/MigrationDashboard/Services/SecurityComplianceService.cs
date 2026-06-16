@@ -31,15 +31,15 @@ public class SecurityComplianceService : ISecurityComplianceService
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
         
-        var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-kedep";
-        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
-        var lambdaName = localStackConfig["SelfTestLambdaName"] ?? "cloud-migration-self-test-kedep";
+        var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-vinhuni";
+        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-vinhuni";
+        var lambdaName = localStackConfig["SelfTestLambdaName"] ?? "cloud-migration-self-test-vinhuni";
 
         if (region == "ap-northeast-1")
         {
-            bucketName = "cloud-migration-backup-kedep-tokyo";
-            tableName = "cloud-migration-logs-kedep-tokyo";
-            lambdaName = "cloud-migration-self-test-kedep-tokyo";
+            bucketName = "cloud-migration-backup-vinhuni-tokyo";
+            tableName = "cloud-migration-logs-vinhuni-tokyo";
+            lambdaName = "cloud-migration-self-test-vinhuni-tokyo";
         }
 
         if (DisasterState.IsSingaporeDown && region == "ap-southeast-1")
@@ -137,7 +137,7 @@ public class SecurityComplianceService : ISecurityComplianceService
             return;
         }
 
-        // 1. Bucket cloud-migration-backup-kedep tồn tại
+        // 1. Bucket cloud-migration-backup-vinhuni tồn tại
         bool bucketExists = false;
         try
         {
@@ -281,7 +281,7 @@ public class SecurityComplianceService : ISecurityComplianceService
             return;
         }
 
-        // 1. Table cloud-migration-logs-kedep tồn tại
+        // 1. Table cloud-migration-logs-vinhuni tồn tại
         bool tableExists = false;
         TableDescription? tableDesc = null;
         try
@@ -452,8 +452,8 @@ public class SecurityComplianceService : ISecurityComplianceService
         // Add IAM summaries to show role profiles in UI
         vm.IamPolicySummaries.Add(new IamPolicySummaryViewModel
         {
-            RoleName = "cloud-migration-app-role-kedep",
-            PolicyName = "cloud-migration-app-policy-kedep",
+            RoleName = "cloud-migration-app-role-vinhuni",
+            PolicyName = "cloud-migration-app-policy-vinhuni",
             Principal = "ec2.amazonaws.com (Dashboard Server)",
             AllowedActions = new List<string> { "s3:PutObject", "s3:GetObject", "s3:ListBucket", "dynamodb:PutItem", "dynamodb:Scan", "dynamodb:GetItem", "lambda:InvokeFunction" },
             Resource = $"arn:aws:s3:::{bucketName}/*, arn:aws:dynamodb:::table/{tableName}",
@@ -462,8 +462,8 @@ public class SecurityComplianceService : ISecurityComplianceService
 
         vm.IamPolicySummaries.Add(new IamPolicySummaryViewModel
         {
-            RoleName = "cloud-migration-lambda-role-kedep",
-            PolicyName = "cloud-migration-lambda-policy-kedep",
+            RoleName = "cloud-migration-lambda-role-vinhuni",
+            PolicyName = "cloud-migration-lambda-policy-vinhuni",
             Principal = "lambda.amazonaws.com (Self-Test Service)",
             AllowedActions = new List<string> { "s3:GetObject", "s3:ListBucket", "dynamodb:PutItem", "logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents" },
             Resource = $"arn:aws:s3:::{bucketName}/*, arn:aws:dynamodb:::table/{tableName}, arn:aws:logs:::*",

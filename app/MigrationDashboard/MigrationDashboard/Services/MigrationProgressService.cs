@@ -35,7 +35,7 @@ public class MigrationProgressService : IMigrationProgressService
         var region = localStackConfig["Region"] ?? "ap-southeast-1";
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
-        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
+        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-vinhuni";
 
         var dynamoConfig = new AmazonDynamoDBConfig
         {

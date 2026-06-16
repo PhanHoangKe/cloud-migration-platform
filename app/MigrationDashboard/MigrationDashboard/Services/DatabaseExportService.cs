@@ -33,8 +33,8 @@ public class DatabaseExportService : IDatabaseExportService
         var region = localStackConfig["Region"] ?? "ap-southeast-1";
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
-        var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-kedep";
-        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
+        var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-vinhuni";
+        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-vinhuni";
 
         var result = new DatabaseExportResultViewModel
         {

@@ -69,9 +69,9 @@ public class DisasterRecoveryController : Controller
                 if (awsSuccess)
                 {
                     DisasterState.AddLog("IaC thành công! Đã tạo các tài nguyên bảo mật trên vùng Tokyo:");
-                    DisasterState.AddLog("  - S3 Bucket: cloud-migration-backup-kedep-tokyo");
-                    DisasterState.AddLog("  - DynamoDB Table: cloud-migration-logs-kedep-tokyo");
-                    DisasterState.AddLog("  - AWS Lambda: cloud-migration-self-test-kedep-tokyo");
+                    DisasterState.AddLog("  - S3 Bucket: cloud-migration-backup-vinhuni-tokyo");
+                    DisasterState.AddLog("  - DynamoDB Table: cloud-migration-logs-vinhuni-tokyo");
+                    DisasterState.AddLog("  - AWS Lambda: cloud-migration-self-test-vinhuni-tokyo");
                 }
                 else
                 {
@@ -149,8 +149,8 @@ public class DisasterRecoveryController : Controller
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
         
-        var tokyoBucket = "cloud-migration-backup-kedep-tokyo";
-        var tokyoTable = "cloud-migration-logs-kedep-tokyo";
+        var tokyoBucket = "cloud-migration-backup-vinhuni-tokyo";
+        var tokyoTable = "cloud-migration-logs-vinhuni-tokyo";
 
         var s3Config = new AmazonS3Config
         {

@@ -13,5 +13,5 @@ variable "aws_region" {
 variable "student_code" {
   description = "Student code or unique suffix for resource names"
   type        = string
-  default     = "kedep"
+  default     = "vinhuni"
 }

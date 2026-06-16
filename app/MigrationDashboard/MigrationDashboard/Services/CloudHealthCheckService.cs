@@ -31,15 +31,15 @@ public class CloudHealthCheckService : ICloudHealthCheckService
         var accessKey = localStackConfig["AccessKey"] ?? "test";
         var secretKey = localStackConfig["SecretKey"] ?? "test";
         
-        var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-kedep";
-        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-kedep";
-        var lambdaName = localStackConfig["SelfTestLambdaName"] ?? "cloud-migration-self-test-kedep";
+        var bucketName = localStackConfig["MigrationBucketName"] ?? "cloud-migration-backup-vinhuni";
+        var tableName = localStackConfig["MigrationLogsTableName"] ?? "cloud-migration-logs-vinhuni";
+        var lambdaName = localStackConfig["SelfTestLambdaName"] ?? "cloud-migration-self-test-vinhuni";
 
         if (region == "ap-northeast-1")
         {
-            bucketName = "cloud-migration-backup-kedep-tokyo";
-            tableName = "cloud-migration-logs-kedep-tokyo";
-            lambdaName = "cloud-migration-self-test-kedep-tokyo";
+            bucketName = "cloud-migration-backup-vinhuni-tokyo";
+            tableName = "cloud-migration-logs-vinhuni-tokyo";
+            lambdaName = "cloud-migration-self-test-vinhuni-tokyo";
         }
 
         var viewModel = new CloudHealthCheckViewModel
